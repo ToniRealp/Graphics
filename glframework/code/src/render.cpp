@@ -415,17 +415,16 @@ class Object
 		uniform mat4 mv_Mat; \n\
 		uniform mat4 objMat; \n\
 		uniform vec3 objectColor; \n\
-		uniform float ambientStrength; \n\
 		uniform vec3 lightColor; \n\
 		uniform vec4 lightPos; \n\
+		uniform float ambientStrength; \n\
 		uniform float specularStrength; \n\
 		uniform float diffStrength; \n\
 		void main() {\n\
-			vec4 projectedLightPos = lightPos * mv_Mat * objMat; \n\
 			vec3 ambient = ambientStrength * lightColor; \n\
 			\n\
 			vec4 norm = normalize(vert_Normal); \n\
-			vec4 lightDir = normalize(projectedLightPos - fragPos); \n\
+			vec4 lightDir = normalize(lightPos - fragPos); \n\
 			float diff = max(dot(norm, lightDir), 0.0); \n\
 			vec3 diffuse = diffStrength * diff * lightColor; \n\
 			vec4 viewDir = normalize(fragPos); \n\
@@ -439,8 +438,6 @@ class Object
 	};
 
 	// out_Color = vec4(color.xyz * dot(vert_Normal, mv_Mat*vec4(0.0, 1.0, 0.0, 0.0)) + color.xyz * 0.3, 1.0 );\n\
-
-	glm::vec4 color = { 1.f, 1.f, 1.f, 1.f };
 
 public:
 
@@ -570,21 +567,19 @@ public:
 		objMat = transform;
 	}
 
-	void ChangeColor(const glm::vec4& newColor) {
-		color = newColor;
-	}
-
 	void Render() {
 
 		glBindVertexArray(Vao);
 		glUseProgram(Program);
 
+		auto viewLightPosition = RenderVars::_modelView * glm::vec4(lightPosition, 1.f);
+
 		glUniformMatrix4fv(glGetUniformLocation(Program, "objMat"), 1, GL_FALSE, glm::value_ptr(objMat));
 		glUniformMatrix4fv(glGetUniformLocation(Program, "mv_Mat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_modelView));
 		glUniformMatrix4fv(glGetUniformLocation(Program, "mvpMat"), 1, GL_FALSE, glm::value_ptr(RenderVars::_MVP));
-		glUniform3f(glGetUniformLocation(Program, "objectColor"), color[0], color[1], color[2]);
+		glUniform3f(glGetUniformLocation(Program, "objectColor"), objectColor[0], objectColor[1], objectColor[2]);
 		glUniform3f(glGetUniformLocation(Program, "lightColor"), lightColor[0], lightColor[1], lightColor[2]);
-		glUniform4f(glGetUniformLocation(Program, "lightPos"), lightPosition[0], lightPosition[1], lightPosition[2],1.f);
+		glUniform4f(glGetUniformLocation(Program, "lightPos"), viewLightPosition[0], viewLightPosition[1], viewLightPosition[2], viewLightPosition[3]);
 		glUniform1f(glGetUniformLocation(Program, "ambientStrength"), kAmbient);
 		glUniform1f(glGetUniformLocation(Program, "specularStrength"), kSpecular);
 		glUniform1f(glGetUniformLocation(Program, "diffStrength"), kDiffuse);
@@ -696,7 +691,6 @@ void GLrender(float dt)
 
 	Axis::drawAxis();
 
-	object.ChangeColor(glm::vec4(lightColor, 1));
 	object.Render();
 	for (auto& cube : cubes) cube.Render();
 
