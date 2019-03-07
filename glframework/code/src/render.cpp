@@ -374,7 +374,7 @@ public:
 };
 
 
-float kAmbient, kDiffuse, kSpecular, specularPower;
+float kAmbient = 0.f, kDiffuse = 0.f, kSpecular = 0.f, specularPower = 2.f;
 glm::vec3 lightPosition, lightColor, objectColor;
 
 class Object
@@ -419,6 +419,7 @@ class Object
 		uniform vec4 lightPos; \n\
 		uniform float ambientStrength; \n\
 		uniform float specularStrength; \n\
+		uniform float specularPower; \n\
 		uniform float diffStrength; \n\
 		void main() {\n\
 			vec3 ambient = ambientStrength * lightColor; \n\
@@ -429,7 +430,7 @@ class Object
 			vec3 diffuse = diffStrength * diff * lightColor; \n\
 			vec4 viewDir = normalize(fragPos); \n\
 			vec4 reflectDir = reflect(-lightDir, norm); \n\
-			float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32); \n\
+			float spec = pow(max(dot(viewDir, reflectDir), 0.0), specularPower); \n\
 			vec3 specular = specularStrength * spec * lightColor; \n\
 			\n\
 			vec3 result = (ambient + diffuse + specular) * objectColor; \n\
@@ -582,6 +583,7 @@ public:
 		glUniform4f(glGetUniformLocation(Program, "lightPos"), viewLightPosition[0], viewLightPosition[1], viewLightPosition[2], viewLightPosition[3]);
 		glUniform1f(glGetUniformLocation(Program, "ambientStrength"), kAmbient);
 		glUniform1f(glGetUniformLocation(Program, "specularStrength"), kSpecular);
+		glUniform1f(glGetUniformLocation(Program, "specularPower"), specularPower);
 		glUniform1f(glGetUniformLocation(Program, "diffStrength"), kDiffuse);
 
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
@@ -629,11 +631,12 @@ void GLinit(int width, int height)
 
 	object.Setup();
 
-	for (auto& cube : cubes)
-	{
-		cube.Setup();
-		cube.Transform(glm::translate(glm::mat4(1.f), glm::vec3(5.f, 5.f, 5.f)));
-	}
+	for (auto& cube : cubes) cube.Setup();
+	cubes[0].Transform(glm::translate(glm::mat4(1.f), glm::vec3(5.f, 5.f, 5.f)));
+	cubes[1].Transform(glm::translate(glm::mat4(1.f), glm::vec3(-1.f, -5.f, 10.f)));
+	cubes[2].Transform(glm::translate(glm::mat4(1.f), glm::vec3(2.f, -7.f, 3.f)));
+	cubes[3].Transform(glm::translate(glm::mat4(1.f), glm::vec3(3.f, 5.f, 5.f)));
+	cubes[4].Transform(glm::translate(glm::mat4(1.f), glm::vec3(-10.f, 8.f, -5.f)));
 }
 
 void GLcleanup()
@@ -647,7 +650,10 @@ void GLcleanup()
 void GLrender(float dt)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
 	static float accum = 0.f;
+	accum += dt;
+	if (accum > glm::two_pi<float>()) accum = 0.f;
 
 	RV::_modelView = glm::mat4(1.f);
 	switch (scene)
@@ -659,26 +665,17 @@ void GLrender(float dt)
 		break;
 
 	case Scene::MOVEMENT:
-		accum += dt;
-		if (accum > glm::two_pi<float>()) accum = 0.f;
-
 		distance = -15.f + glm::sin(accum) * movementSpeed;
 
 		RV::_modelView = glm::translate(RV::_modelView, glm::vec3(0.f, 0.f, distance));
 		break;
 
 	case Scene::ZOOM:
-		accum += dt;
-		if (accum > glm::two_pi<float>()) accum = 0.f;
-
 		RV::_projection = glm::perspective(RV::FOV + glm::sin(accum) / movementSpeed, aspectRatio, RV::zNear, RV::zFar);
 		RV::_modelView = glm::translate(RV::_modelView, glm::vec3(0.f, 0.f, -15.f));
 		break;
 
 	case Scene::DOLLY:
-		accum += dt;
-		if (accum > glm::two_pi<float>()) accum = 0.f;
-
 		distance = -15.f + glm::sin(accum) * movementSpeed;
 		alpha = glm::abs(glm::atan(objectSize / (distance + objectSize / 2)));
 
@@ -708,8 +705,8 @@ void GUI()
 		ImGui::DragFloat("K_amb", &kAmbient, 0.01f, 0.f, 1.f);
 		ImGui::DragFloat("K_dif", &kDiffuse, 0.01f, 0.f, 1.f);
 		ImGui::DragFloat("K_spe", &kSpecular, 0.01f, 0.f, 1.f);
-		ImGui::DragFloat("Specular Power", &specularPower, 1.f, 1.f);
-		ImGui::DragFloat3("Light Position", static_cast<float*>(&lightPosition.x));
+		ImGui::DragFloat("Specular Power", &specularPower, 1.f, 2.f, 256.f);
+		ImGui::DragFloat3("Light Position", static_cast<float*>(&lightPosition.x), 0.1f);
 		ImGui::ColorEdit3("Light Color", static_cast<float*>(&lightColor.x));
 		ImGui::ColorEdit3("Object Color", static_cast<float*>(&objectColor.x));
 
