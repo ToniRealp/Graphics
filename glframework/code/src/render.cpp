@@ -525,7 +525,7 @@ public:
 
 	void Setup()
 	{
-		Load("res/cube.obj", vertices, uvs, normals);///
+		Load("res/coche.obj", vertices, uvs, normals);///
 		glGenVertexArrays(1, &Vao);
 		glBindVertexArray(Vao);
 		glGenBuffers(2, Vbo);
