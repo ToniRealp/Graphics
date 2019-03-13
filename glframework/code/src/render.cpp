@@ -428,7 +428,7 @@ class Object
 			vec4 lightDir = normalize(lightPos - fragPos); \n\
 			float diff = max(dot(norm, lightDir), 0.0); \n\
 			vec3 diffuse = diffStrength * diff * lightColor; \n\
-			vec4 viewDir = normalize(fragPos); \n\
+			vec4 viewDir = normalize(-fragPos); \n\
 			vec4 reflectDir = reflect(-lightDir, norm); \n\
 			float spec = pow(max(dot(viewDir, reflectDir), 0.0), specularPower); \n\
 			vec3 specular = specularStrength * spec * lightColor; \n\
