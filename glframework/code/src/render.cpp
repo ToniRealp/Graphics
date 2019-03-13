@@ -679,8 +679,9 @@ void GLrender(float dt)
 	case Scene::DOLLY:
 				
 		//Necesitamos calcular la constante que representaria la altura del objeto a una cierta distancia y FOV
-		//2.0 * distance * Mathf.Tan(camera.fieldOfView * 0.5);
-		//a 15 unidades de distancia 19.11, a 10 unidades de distancia 12.74, a 5 unidades de distancia 6.37
+		//Suponemos que FOV = 65 deg 
+		//kHeight = 2.0 * distance * Mathf.Tan(camera.fieldOfView * 0.5);
+		//a 15 unidades de distancia kHeight = 19.11, a 10 kHeight = 12.74, a 5 kHeight = 6.37
 
 		distance = -10 + sin(accum)*movementSpeed;
 		alpha =  glm::abs(2*glm::atan(19.11f/ (2 * distance)));
