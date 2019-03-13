@@ -10,6 +10,7 @@
 #include "GL_framework.h"
 
 #include <vector>
+#include <iostream>
 
 ///////// fw decl
 namespace ImGui {
@@ -609,7 +610,7 @@ Cube cubes[5];
 
 float movementSpeed = 5.f;
 
-float objectSize = 15.f;
+float objectSize =4.f;
 float distance, alpha;
 float cameraOffset;
 
@@ -676,9 +677,14 @@ void GLrender(float dt)
 		break;
 
 	case Scene::DOLLY:
-		distance = -15.f + glm::sin(accum) * movementSpeed;
-		alpha = glm::abs(glm::atan(objectSize / (distance + objectSize / 2)));
+		distance = -10+sin(accum)*movementSpeed;
+		
+		//necesitamos calcular la constante que representaria la altura del objeto a una cierta distancia
+		//2.0 * distance * Mathf.Tan(camera.fieldOfView * 0.5);
+		//a 10 unidades de distancia 12.74, a 5 unidades de distancia 6.37
 
+		alpha =  glm::abs(2*glm::atan(19.11f/ (2 * distance)));
+		std::cout << glm::degrees(alpha) << std::endl;
 		RV::_projection = glm::perspective(alpha, aspectRatio, RV::zNear, RV::zFar);
 		RV::_modelView = glm::translate(RV::_modelView, glm::vec3(0.f, 0.f, distance));
 		break;
