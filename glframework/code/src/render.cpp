@@ -634,8 +634,8 @@ void GLinit(int width, int height)
 
 	for (auto& cube : cubes) cube.Setup();
 	cubes[0].Transform(glm::translate(glm::mat4(1.f), glm::vec3(5.f, 5.f, 5.f)));
-	cubes[1].Transform(glm::translate(glm::mat4(1.f), glm::vec3(-1.f, -5.f, 10.f)));
-	cubes[2].Transform(glm::translate(glm::mat4(1.f), glm::vec3(2.f, -7.f, 3.f)));
+	cubes[1].Transform(glm::translate(glm::mat4(1.f), glm::vec3(-1.f, -5.f, -10.f)));
+	cubes[2].Transform(glm::translate(glm::mat4(1.f), glm::vec3(2.f, -7.f, -3.f)));
 	cubes[3].Transform(glm::translate(glm::mat4(1.f), glm::vec3(3.f, 5.f, 5.f)));
 	cubes[4].Transform(glm::translate(glm::mat4(1.f), glm::vec3(-10.f, 8.f, -5.f)));
 }
