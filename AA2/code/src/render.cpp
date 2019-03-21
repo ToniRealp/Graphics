@@ -476,6 +476,7 @@ namespace TruncatedOctahedrons
 	void Draw()
 	{
 		glBindVertexArray(vao);
+
 		glUseProgram(program);
 		Shader::SetMat4(program, "view", view);
 		Shader::SetMat4(program, "projection", projection);
