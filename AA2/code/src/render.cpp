@@ -370,6 +370,18 @@ namespace Shader
 		glShaderSource(id, 1, &src, nullptr);
 		glCompileShader(id);
 
+		GLint res;
+		glGetShaderiv(id, GL_COMPILE_STATUS, &res);
+		if (res == GL_FALSE) {
+			glGetShaderiv(id, GL_INFO_LOG_LENGTH, &res);
+			char *buff = new char[res];
+			glGetShaderInfoLog(id, res, &res, buff);
+			fprintf(stderr, "Error Shader %s", buff);
+			delete[] buff;
+			glDeleteShader(id);
+			return 0;
+		}
+
 		return id;
 	}
 
@@ -390,11 +402,23 @@ namespace Shader
 		}
 
 		glLinkProgram(program);
+
+		GLint res;
+		glGetProgramiv(program, GL_LINK_STATUS, &res);
+		if (res == GL_FALSE) {
+			glGetProgramiv(program, GL_INFO_LOG_LENGTH, &res);
+			char *buff = new char[res];
+			glGetProgramInfoLog(program, res, &res, buff);
+			fprintf(stderr, "Error Link: %s", buff);
+			delete[] buff;
+		}
+
 		glValidateProgram(program);
 
 		return program;
 	}
 
+	// Returns the source code of the shader located at the specified path.
 	std::string ParseShader(const std::string& path)
 	{
 		std::ifstream file(path);
@@ -418,6 +442,9 @@ namespace TruncatedOctahedrons
 	unsigned int vao, vbo;
 	unsigned int program;
 
+	glm::mat4& view = RV::_modelView;
+	glm::mat4& projection = RV::_projection;
+
 	void Setup()
 	{
 		glGenVertexArrays(1, &vao);
@@ -429,14 +456,14 @@ namespace TruncatedOctahedrons
 		glm::vec3 points[20];
 		for (auto& point : points)
 		{
-			point = { (rand() % 1000) / 100.f, (rand() % 1000) / 100.f, (rand() % 1000) / 100.f };
+			point = { (rand() % 1000) / 100.f, (rand() % 1000) / 100.f,  (rand() % 1000) / 100.f };
 			point -= 5;
 		}
 
 		glBufferData(GL_ARRAY_BUFFER, sizeof(points), static_cast<float*>(&points[0].x), GL_STATIC_DRAW);
 
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 3, nullptr);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
 
 		const auto vertex_shader = Shader::ParseShader("res/shaders/Vertex.shader");
@@ -450,7 +477,9 @@ namespace TruncatedOctahedrons
 	{
 		glBindVertexArray(vao);
 		glUseProgram(program);
-		
+		Shader::SetMat4(program, "view", view);
+		Shader::SetMat4(program, "projection", projection);
+
 		glDrawArrays(GL_POINTS, 0, 20);
 	}
 
@@ -460,7 +489,8 @@ namespace TruncatedOctahedrons
 	}
 };
 
-void GLinit(int width, int height) {
+void GLinit(int width, int height)
+{
 	glViewport(0, 0, width, height);
 	glClearColor(0.2f, 0.2f, 0.2f, 1.f);
 	glClearDepth(1.f);
@@ -477,8 +507,10 @@ void GLinit(int width, int height) {
 	TruncatedOctahedrons::Setup();
 }
 
-void GLcleanup() {
+void GLcleanup()
+{
 	Axis::cleanupAxis();
+	TruncatedOctahedrons::Clean();
 }
 
 void GLrender(float dt) {
@@ -499,7 +531,8 @@ void GLrender(float dt) {
 	ImGui::Render();
 }
 
-void GUI() {
+void GUI()
+{
 	bool show = true;
 	ImGui::Begin("Physics Parameters", &show, 0);
 
