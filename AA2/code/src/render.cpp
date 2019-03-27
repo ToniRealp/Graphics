@@ -497,7 +497,7 @@ void GLinit(int width, int height)
 	glClearDepth(1.f);
 	glDepthFunc(GL_LEQUAL);
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
+	// glEnable(GL_CULL_FACE);
 
 	RV::_projection = glm::perspective(RV::FOV, (float)width / (float)height, RV::zNear, RV::zFar);
 
@@ -514,7 +514,8 @@ void GLcleanup()
 	TruncatedOctahedrons::Clean();
 }
 
-void GLrender(float dt) {
+void GLrender(float dt)
+{
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	RV::_modelView = glm::mat4(1.f);
