@@ -437,7 +437,7 @@ namespace Shader
 	}
 }
 
-namespace TruncatedOctahedrons
+namespace Octahedrons
 {
 	unsigned int vao, vbo;
 	unsigned int program;
@@ -490,6 +490,59 @@ namespace TruncatedOctahedrons
 	}
 };
 
+namespace HoneyCombs
+{
+	unsigned int vao, vbo;
+	unsigned int program;
+
+	glm::mat4& view = RV::_modelView;
+	glm::mat4& projection = RV::_projection;
+
+	void Setup()
+	{
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+
+		glGenBuffers(1, &vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+		glm::vec3 points[20];
+		for (auto& point : points)
+		{
+			point = { (rand() % 1000) / 100.f, (rand() % 1000) / 100.f,  (rand() % 1000) / 100.f };
+			point -= 5;
+		}
+
+		glBufferData(GL_ARRAY_BUFFER, sizeof(points), static_cast<float*>(&points[0].x), GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+
+		const auto vertex_shader = Shader::ParseShader("res/exercise_2/Vertex.shader");
+		const auto fragment_shader = Shader::ParseShader("res/exercise_2/Fragment.shader");
+		const auto geometry_shader = Shader::ParseShader("res/exercise_2/Geometry.shader");
+
+		program = Shader::CreateProgram(vertex_shader, fragment_shader, geometry_shader);
+	}
+
+	void Draw()
+	{
+		glBindVertexArray(vao);
+
+		glUseProgram(program);
+		Shader::SetMat4(program, "view", view);
+		Shader::SetMat4(program, "projection", projection);
+
+		glDrawArrays(GL_POINTS, 0, 20);
+	}
+
+	void Clean()
+	{
+		glDeleteBuffers(1, &vbo);
+	}
+}
+
 void GLinit(int width, int height)
 {
 	glViewport(0, 0, width, height);
@@ -505,13 +558,13 @@ void GLinit(int width, int height)
 	Axis::setupAxis();
 
 
-	TruncatedOctahedrons::Setup();
+	HoneyCombs::Setup();
 }
 
 void GLcleanup()
 {
 	Axis::cleanupAxis();
-	TruncatedOctahedrons::Clean();
+	HoneyCombs::Clean();
 }
 
 void GLrender(float dt)
@@ -527,7 +580,7 @@ void GLrender(float dt)
 
 	Axis::drawAxis();
 
-	TruncatedOctahedrons::Draw();
+	HoneyCombs::Draw();
 	
 
 	ImGui::Render();
