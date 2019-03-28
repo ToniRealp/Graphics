@@ -8,8 +8,15 @@ out vec4 face_color;
 uniform mat4 projection;
 uniform mat4 view;
 
+struct Quad
+{
+	vec3 positions[4];
+};
+
 float h = 1.0f;
 float delta = 0.25f;
+
+vec4 red = vec4(1.0, 0.0, 0.0, 1.0);
 
 void create_face(vec3 v1, vec3 v2, vec3 v3, vec4 color)
 {
@@ -29,39 +36,22 @@ void create_face(vec3 v1, vec3 v2, vec3 v3, vec4 color)
 	EndPrimitive();
 }
 
-void emit_hexagon(vec3 v1, vec3 v2, vec3 v3, vec4 color)
+Quad emit_quad(vec3 v1, vec3 v2, vec3 v3, vec3 v4, vec3 v5, vec4 color)
 {
-	vec3 v12 = v2 - v1;
-	vec3 v23 = v3 - v2;
-	vec3 v31 = v1 - v3;
+	Quad quad = Quad(vec3[4](v1 + (v2 - v1) * delta, v1 + (v3 - v1) * delta, v1 + (v4 - v1) * delta, v1 + (v5 - v1) * delta));
 
-	vec3 vf1 = v1 + v12 * delta;
-	vec3 vf2 = v1 + v12 * (1 - delta);
-	vec3 vf3 = v2 + v23 * delta;
-	vec3 vf4 = v2 + v23 * (1 - delta);
-	vec3 vf5 = v3 + v31 * delta;
-	vec3 vf6 = v3 + v31 * (1 - delta);
+	create_face(quad.positions[0], quad.positions[1], quad.positions[2], color);
+	create_face(quad.positions[2], quad.positions[3], quad.positions[0], color);
 
-	create_face(vf1, vf2, vf3, color);
-	create_face(vf1, vf3, vf4, color);
-	create_face(vf1, vf4, vf5, color);
-	create_face(vf1, vf5, vf6, color);
-}
+	return quad;
+};
 
-void emit_square(vec3 v1, vec3 v2, vec3 v3, vec4 color)
+void emit_hexagon(vec3 v1, vec3 v2, vec3 v3, vec3 v4, vec3 v5, vec3 v6, vec4 color)
 {
-	vec3 v12 = (v2 - v1) * delta;
-	vec3 v13 = (v3 - v1) * delta;
-
-	vec3 center = v12 * dot(v12, vec3(0.0, 1.0, 0.0));
-
-	vec3 vf1 = v1 + v12;
-	vec3 vf2 = v1 + v13;
-	vec3 vf3 = (center - vf1) * 2;
-	vec3 vf4 = (center - vf2) * 2;
-
-	create_face(vf1, vf2, vf3, color);
-	create_face(vf1, vf3, vf4, color);
+	create_face(v1, v2, v3, color);
+	create_face(v1, v3, v4, color);
+	create_face(v1, v4, v5, color);
+	create_face(v1, v5, v6, color);
 }
 
 void main()
@@ -77,14 +67,15 @@ void main()
 	vec3 front_left_vertex = center + vec3(-1.0, 0.0, 1.0) * h;
 	vec3 front_right_vertex = center + vec3(1.0, 0.0, 1.0) * h;
 
-	emit_hexagon(top_vertex, back_right_vertex, back_left_vertex, vec4(1.0, 0.0, 0.0, 1.0));
-	emit_hexagon(top_vertex, front_left_vertex, front_right_vertex, vec4(1.0, 0.0, 0.0, 1.0));
-	emit_hexagon(top_vertex, back_left_vertex, front_left_vertex, vec4(1.0, 0.0, 0.0, 1.0));
-	emit_hexagon(top_vertex, front_right_vertex, back_right_vertex, vec4(1.0, 0.0, 0.0, 1.0));
-	emit_hexagon(bot_vertex, back_left_vertex, back_right_vertex, vec4(0.0, 1.0, 0.0, 1.0));
-	emit_hexagon(bot_vertex, front_right_vertex, front_left_vertex, vec4(1.0, 0.0, 0.0, 1.0));
-	emit_hexagon(bot_vertex, front_left_vertex, back_left_vertex, vec4(1.0, 0.0, 0.0, 1.0));
-	emit_hexagon(bot_vertex, back_right_vertex, front_right_vertex, vec4(1.0, 0.0, 0.0, 1.0));
+	Quad quad_top = emit_quad(top_vertex, back_right_vertex, back_left_vertex, front_left_vertex, front_right_vertex, red);
+	Quad quad_bot = emit_quad(bot_vertex, front_right_vertex, front_left_vertex, back_left_vertex, back_right_vertex, red);
 
-	emit_square(top_vertex, back_right_vertex, back_left_vertex, vec4(0.0, 0.0, 1.0, 1.0));
+	Quad quad_front_right = emit_quad(front_right_vertex, back_right_vertex, top_vertex, front_left_vertex, bot_vertex, red);
+	Quad quad_front_left = emit_quad(front_left_vertex, front_right_vertex, top_vertex, back_left_vertex, bot_vertex, red);
+
+	Quad quad_back_right = emit_quad(back_right_vertex, back_left_vertex, top_vertex, front_right_vertex, bot_vertex, red);
+	Quad quad_back_left = emit_quad(back_left_vertex, front_left_vertex, top_vertex, back_right_vertex, bot_vertex, red);
+	
+	emit_hexagon(quad_top.positions[2], quad_front_left.positions[1], quad_front_left.positions[0], quad_front_right.positions[2], quad_front_right.positions[1], quad_top.positions[3], red);
+	
 }
