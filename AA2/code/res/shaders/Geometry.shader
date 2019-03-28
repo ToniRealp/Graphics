@@ -1,7 +1,7 @@
 #version 330 core
 
 layout(points) in;
-layout(triangle_strip, max_vertices = 128) out;
+layout(triangle_strip, max_vertices = 82) out;
 
 out vec4 face_color;
 
@@ -24,40 +24,40 @@ float delta = 0.3f;
 vec4 red = vec4(1.0, 0.0, 0.0, 1.0);
 vec4 blue = vec4(0.0, 0.0, 1.0, 1.0);
 
-void create_face(vec3 v1, vec3 v2, vec3 v3, vec4 color)
+void emit_vertex(vec3 vertex)
 {
-	face_color = color;
-
-
-	gl_Position = projection * view * vec4(v1, 1.0);
+	gl_Position = projection * view * vec4(vertex, 1.0);
 	EmitVertex();
-
-	gl_Position = projection * view * vec4(v2, 1.0);
-	EmitVertex();
-
-	gl_Position = projection * view * vec4(v3, 1.0);
-	EmitVertex();
-
-
-	EndPrimitive();
 }
 
 Quad emit_quad(vec3 v1, vec3 v2, vec3 v3, vec3 v4, vec3 v5, vec4 color)
 {
 	Quad quad = Quad(vec3[4](v1 + (v2 - v1) * delta, v1 + (v3 - v1) * delta, v1 + (v4 - v1) * delta, v1 + (v5 - v1) * delta));
 
-	create_face(quad.vertices[0], quad.vertices[1], quad.vertices[2], color);
-	create_face(quad.vertices[2], quad.vertices[3], quad.vertices[0], color);
+	emit_vertex(quad.vertices[0]);
+	emit_vertex(quad.vertices[1]);
+	emit_vertex(quad.vertices[3]);
+	emit_vertex(quad.vertices[2]);
+	
+	face_color = color;
+
+	EndPrimitive();
 
 	return quad;
 };
 
 void emit_hexagon(Hexagon hex, vec4 color)
 {
-	create_face(hex.vertices[0], hex.vertices[1], hex.vertices[2], color);
-	create_face(hex.vertices[0], hex.vertices[2], hex.vertices[3], color);
-	create_face(hex.vertices[0], hex.vertices[3], hex.vertices[4], color);
-	create_face(hex.vertices[0], hex.vertices[4], hex.vertices[5], color);
+	emit_vertex(hex.vertices[1]);
+	emit_vertex(hex.vertices[2]);
+	emit_vertex(hex.vertices[0]);
+	emit_vertex(hex.vertices[3]);
+	emit_vertex(hex.vertices[5]);
+	emit_vertex(hex.vertices[4]);
+
+	face_color = color;
+
+	EndPrimitive();
 }
 
 void main()
@@ -73,6 +73,8 @@ void main()
 	vec3 front_left_vertex = center + vec3(-1.0, 0.0, 1.0) * h;
 	vec3 front_right_vertex = center + vec3(1.0, 0.0, 1.0) * h;
 
+
+
 	Quad quad_top = emit_quad(top_vertex, back_right_vertex, back_left_vertex, front_left_vertex, front_right_vertex, red);
 	Quad quad_bot = emit_quad(bot_vertex, front_right_vertex, front_left_vertex, back_left_vertex, back_right_vertex, red);
 
@@ -82,6 +84,8 @@ void main()
 	Quad quad_back_right = emit_quad(back_right_vertex, back_left_vertex, top_vertex, front_right_vertex, bot_vertex, red);
 	Quad quad_back_left = emit_quad(back_left_vertex, front_left_vertex, top_vertex, back_right_vertex, bot_vertex, red);
 	
+
+
 	Hexagon hex_top_front = Hexagon(vec3[6](quad_top.vertices[2], quad_front_left.vertices[1], quad_front_left.vertices[0], quad_front_right.vertices[2], quad_front_right.vertices[1], quad_top.vertices[3]));
 	Hexagon hex_top_right = Hexagon(vec3[6](quad_top.vertices[3], quad_front_right.vertices[1], quad_front_right.vertices[0], quad_back_right.vertices[2], quad_back_right.vertices[1], quad_top.vertices[0]));
 	Hexagon hex_top_back = Hexagon(vec3[6](quad_top.vertices[0], quad_back_right.vertices[1], quad_back_right.vertices[0], quad_back_left.vertices[2], quad_back_left.vertices[1], quad_top.vertices[1]));
