@@ -466,9 +466,9 @@ namespace TruncatedOctahedrons
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
 
-		const auto vertex_shader = Shader::ParseShader("res/shaders/Vertex.shader");
-		const auto fragment_shader = Shader::ParseShader("res/shaders/Fragment.shader");
-		const auto geometry_shader = Shader::ParseShader("res/shaders/Geometry.shader");
+		const auto vertex_shader = Shader::ParseShader("res/exercise_1/Vertex.shader");
+		const auto fragment_shader = Shader::ParseShader("res/exercise_1/Fragment.shader");
+		const auto geometry_shader = Shader::ParseShader("res/exercise_1/Geometry.shader");
 
 		program = Shader::CreateProgram(vertex_shader, fragment_shader, geometry_shader);
 	}
