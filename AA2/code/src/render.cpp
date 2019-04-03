@@ -543,6 +543,11 @@ namespace HoneyCombs
 	}
 }
 
+enum class Scene { Exercise1, Exercise2, Exercise3 };
+
+Scene scene{ Scene::Exercise1 };
+std::string sceneName{ "Exercise1" };
+
 void GLinit(int width, int height)
 {
 	glViewport(0, 0, width, height);
@@ -558,12 +563,14 @@ void GLinit(int width, int height)
 	Axis::setupAxis();
 
 
+	Octahedrons::Setup();
 	HoneyCombs::Setup();
 }
 
 void GLcleanup()
 {
 	Axis::cleanupAxis();
+	Octahedrons::Clean();
 	HoneyCombs::Clean();
 }
 
@@ -579,9 +586,21 @@ void GLrender(float dt)
 	RV::_MVP = RV::_projection * RV::_modelView;
 
 	Axis::drawAxis();
-
-	HoneyCombs::Draw();
 	
+	switch (scene)
+	{
+	case Scene::Exercise1:
+		Octahedrons::Draw();
+		break;
+
+	case Scene::Exercise2:
+		HoneyCombs::Draw();
+		break;
+
+	case Scene::Exercise3:
+		//Todo lo del ejercicio 3
+		break;
+	}
 
 	ImGui::Render();
 }
@@ -590,26 +609,31 @@ void GUI()
 {
 	bool show = true;
 	ImGui::Begin("Physics Parameters", &show, 0);
-
 	{
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
-		/////////////////////////////////////////////////////TODO
-		// Do your GUI code here....
-		// ...
-		// ...
-		// ...
-		/////////////////////////////////////////////////////////
+		if (ImGui::Button("Change Exercise"))
+		{
+			scene = static_cast<Scene>((static_cast<int>(scene) + 1) % 3);
+
+			switch (scene)
+			{
+			case Scene::Exercise1:
+				sceneName = "Exercise1";
+				break;
+
+			case Scene::Exercise2:
+				sceneName = "Exercise2";
+				break;
+
+			case Scene::Exercise3:
+				sceneName = "Exercise3";
+				break;
+			}
+		}
+
+		ImGui::Text(sceneName.c_str());
 	}
-	// .........................
 
 	ImGui::End();
-
-	// Example code -- ImGui test window. Most of the sample code is in ImGui::ShowTestWindow()
-	bool show_test_window = false;
-	if (show_test_window)
-	{
-		ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiSetCond_FirstUseEver);
-		ImGui::ShowTestWindow(&show_test_window);
-	}
 }

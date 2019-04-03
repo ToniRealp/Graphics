@@ -77,8 +77,6 @@ void main()
 
 	Quad quad_back_right = emit_quad(back_right_vertex, back_left_vertex, top_vertex, front_right_vertex, bot_vertex, red);
 	Quad quad_back_left = emit_quad(back_left_vertex, front_left_vertex, top_vertex, back_right_vertex, bot_vertex, red);
-	
-
 
 	Hexagon hex_top_front = Hexagon(vec3[6](quad_top.vertices[2], quad_front_left.vertices[1], quad_front_left.vertices[0], quad_front_right.vertices[2], quad_front_right.vertices[1], quad_top.vertices[3]));
 	Hexagon hex_top_right = Hexagon(vec3[6](quad_top.vertices[3], quad_front_right.vertices[1], quad_front_right.vertices[0], quad_back_right.vertices[2], quad_back_right.vertices[1], quad_top.vertices[0]));
@@ -98,6 +96,5 @@ void main()
 	emit_hexagon(hex_bot_front, blue);
 	emit_hexagon(hex_bot_right, blue);
 	emit_hexagon(hex_bot_back, blue);
-	emit_hexagon(hex_bot_left, blue);
-	
+	emit_hexagon(hex_bot_left, blue);	
 }
