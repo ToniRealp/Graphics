@@ -134,9 +134,30 @@ void main()
 	hex_bot_front.vertices[4] = quad_front_left.vertices[3];
 	hex_bot_front.vertices[5] = quad_bot.vertices[1];
 
-	Hexagon hex_bot_right = Hexagon(vec3[6](quad_bot.vertices[3], quad_back_right.vertices[3], quad_back_right.vertices[2], quad_front_right.vertices[0], quad_front_right.vertices[3], quad_bot.vertices[0]));
-	Hexagon hex_bot_back = Hexagon(vec3[6](quad_bot.vertices[2], quad_back_left.vertices[3], quad_back_left.vertices[2], quad_back_right.vertices[0], quad_back_right.vertices[3], quad_bot.vertices[3]));
-	Hexagon hex_bot_left = Hexagon(vec3[6](quad_bot.vertices[1], quad_front_left.vertices[3], quad_front_left.vertices[2], quad_back_left.vertices[0], quad_back_left.vertices[3], quad_bot.vertices[2]));
+	Hexagon hex_bot_right;
+	hex_bot_right.vertices[0] = quad_bot.vertices[3];
+	hex_bot_right.vertices[1] = quad_back_right.vertices[3];
+	hex_bot_right.vertices[2] = quad_back_right.vertices[2];
+	hex_bot_right.vertices[3] = quad_front_right.vertices[0];
+	hex_bot_right.vertices[4] = quad_front_right.vertices[3];
+	hex_bot_right.vertices[5] = quad_bot.vertices[0];
+	
+	Hexagon hex_bot_back;
+	hex_bot_back.vertices[0] = quad_bot.vertices[2];
+	hex_bot_back.vertices[1] = quad_back_left.vertices[3];
+	hex_bot_back.vertices[2] = quad_back_left.vertices[2];
+	hex_bot_back.vertices[3] = quad_back_right.vertices[0];
+	hex_bot_back.vertices[4] = quad_back_right.vertices[3];
+	hex_bot_back.vertices[5] = quad_bot.vertices[3];
+	
+	
+	Hexagon hex_bot_left;
+	hex_bot_left.vertices[0] = quad_bot.vertices[1];
+	hex_bot_left.vertices[1] = quad_front_left.vertices[3];
+	hex_bot_left.vertices[2] = quad_front_left.vertices[2];
+	hex_bot_left.vertices[3] = quad_back_left.vertices[0];
+	hex_bot_left.vertices[4] = quad_back_left.vertices[3];
+	hex_bot_left.vertices[5] = quad_bot.vertices[2];
 
 
 
