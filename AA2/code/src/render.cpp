@@ -546,7 +546,7 @@ namespace HoneyCombs
 enum class Scene { EXERCISE_1, EXERCISE_2, EXERCISE_3 };
 
 Scene scene{ Scene::EXERCISE_1 };
-std::string sceneName{ "Exercise 1" };
+std::string sceneName{ "TRUNCATED OCTAHEDRONS" };
 
 void GLinit(int width, int height)
 {
@@ -615,19 +615,19 @@ void GUI()
 		if (ImGui::Button("Change Exercise"))
 		{
 			scene = static_cast<Scene>((static_cast<int>(scene) + 1) % 3);
-			std::cout << scene;
+
 			switch (scene)
 			{
 			case Scene::EXERCISE_1:
-				sceneName = "Exercise 1";
+				sceneName = "TRUNCATED OCTAHEDRONS";
 				break;
 
 			case Scene::EXERCISE_2:
-				sceneName = "Exercise 2";
+				sceneName = "HONEYCOMBS";
 				break;
 
 			case Scene::EXERCISE_3:
-				sceneName = "Exercise 3";
+				sceneName = "BORONOID";
 				break;
 			}
 		}

@@ -112,13 +112,12 @@ void main()
 	}
 
 	// quad_top[2, 3], quad_front_left[1, 0], quad_front_right[1, 2]
-	quad_top.vertices[2] = hex_top_front[0];
-	quad_top.vertices[3] = hex_top_front[5];
-	quad_front_left.vertices[1] = hex_top_front[1];
-	quad_front_left.vertices[0] = hex_top_front[2];
-	quad_front_right.vertices[2] = hex_top_front[3];
-	quad_front_right.vertices[1] = hex_top_front[4];
-	
+	quad_top.vertices[2] = hex_top_front.vertices[0];
+	quad_top.vertices[3] = hex_top_front.vertices[5];
+	quad_front_left.vertices[1] = hex_top_front.vertices[1];
+	quad_front_left.vertices[0] = hex_top_front.vertices[2];
+	quad_front_right.vertices[2] = hex_top_front.vertices[3];
+	quad_front_right.vertices[1] = hex_top_front.vertices[4];
 
 
 	// Emit hexagon faces.
