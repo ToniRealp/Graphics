@@ -543,10 +543,10 @@ namespace HoneyCombs
 	}
 }
 
-enum class Scene { Exercise1, Exercise2, Exercise3 };
+enum class Scene { EXERCISE_1, EXERCISE_2, EXERCISE_3 };
 
-Scene scene{ Scene::Exercise1 };
-std::string sceneName{ "Exercise1" };
+Scene scene{ Scene::EXERCISE_1 };
+std::string sceneName{ "Exercise 1" };
 
 void GLinit(int width, int height)
 {
@@ -589,16 +589,16 @@ void GLrender(float dt)
 	
 	switch (scene)
 	{
-	case Scene::Exercise1:
+	case Scene::EXERCISE_1:
 		Octahedrons::Draw();
 		break;
 
-	case Scene::Exercise2:
+	case Scene::EXERCISE_2:
 		HoneyCombs::Draw();
 		break;
 
-	case Scene::Exercise3:
-		//Todo lo del ejercicio 3
+	case Scene::EXERCISE_3:
+		// TODO: Ejercicio 3
 		break;
 	}
 
@@ -618,16 +618,16 @@ void GUI()
 
 			switch (scene)
 			{
-			case Scene::Exercise1:
-				sceneName = "Exercise1";
+			case Scene::EXERCISE_1:
+				sceneName = "Exercise 1";
 				break;
 
-			case Scene::Exercise2:
-				sceneName = "Exercise2";
+			case Scene::EXERCISE_2:
+				sceneName = "Exercise 2";
 				break;
 
-			case Scene::Exercise3:
-				sceneName = "Exercise3";
+			case Scene::EXERCISE_3:
+				sceneName = "Exercise 3";
 				break;
 			}
 		}
