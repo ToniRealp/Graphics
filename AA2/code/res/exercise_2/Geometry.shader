@@ -36,7 +36,6 @@ void emit_vertex(vec3 vertex, vec4 color)
 	EmitVertex();
 }
 
-
 void emit_hexagon(Hexagon hex, vec4 color)
 {
 	emit_vertex(hex.vertices[1], color);
@@ -85,6 +84,18 @@ Quad get_quad(vec3 v1, vec3 v2, vec3 v3, vec3 v4, vec3 v5, vec4 color)
 	return quad;
 };
 
+Hexagon get_hexagon(vec3 v1, vec3 v2, vec3 v3, vec3 v4, vec3 v5, vec3 v6)
+{
+	Hexagon hex;
+	hex.vertices[0] = v1;
+	hex.vertices[1] = v2;
+	hex.vertices[2] = v3;
+	hex.vertices[3] = v4;
+	hex.vertices[4] = v5;
+	hex.vertices[5] = v6;
+
+	return hex;
+}
 
 vec3 find_baricenter(Hexagon hex)
 {
