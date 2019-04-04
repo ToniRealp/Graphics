@@ -558,8 +558,6 @@ void GLinit(int width, int height)
 	glEnable(GL_CULL_FACE);
 
 	RV::_projection = glm::perspective(RV::FOV, (float)width / (float)height, RV::zNear, RV::zFar);
-
-	// Setup shaders & geometry
 	Axis::setupAxis();
 
 
@@ -570,6 +568,8 @@ void GLinit(int width, int height)
 void GLcleanup()
 {
 	Axis::cleanupAxis();
+
+
 	Octahedrons::Clean();
 	HoneyCombs::Clean();
 }
@@ -584,9 +584,9 @@ void GLrender(float dt)
 	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
 
 	RV::_MVP = RV::_projection * RV::_modelView;
-
 	Axis::drawAxis();
-	
+
+
 	switch (scene)
 	{
 	case Scene::EXERCISE_1:
@@ -615,7 +615,7 @@ void GUI()
 		if (ImGui::Button("Change Exercise"))
 		{
 			scene = static_cast<Scene>((static_cast<int>(scene) + 1) % 3);
-
+			std::cout << scene;
 			switch (scene)
 			{
 			case Scene::EXERCISE_1:
