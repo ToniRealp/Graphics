@@ -34,7 +34,11 @@ void emit_vertex(vec3 vertex, vec4 color)
 
 Quad emit_quad(vec3 v1, vec3 v2, vec3 v3, vec3 v4, vec3 v5, vec4 color)
 {
-	Quad quad = Quad(vec3[4](v1 + (v2 - v1) * delta, v1 + (v3 - v1) * delta, v1 + (v4 - v1) * delta, v1 + (v5 - v1) * delta));
+	Quad quad;
+	quad.vertices[0] = v1 + (v2 - v1) * delta;
+	quad.vertices[1] = v1 + (v3 - v1) * delta;
+	quad.vertices[2] = v1 + (v4 - v1) * delta;
+	quad.vertices[3] = v1 + (v5 - v1) * delta;
 
 	emit_vertex(quad.vertices[0], color);
 	emit_vertex(quad.vertices[1], color);
