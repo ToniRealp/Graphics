@@ -14,7 +14,8 @@
 #include <iostream>
 #include <algorithm>
 
-///////// fw decl
+
+
 namespace ImGui {
 	void Render();
 }
@@ -23,7 +24,6 @@ void setupAxis();
 void cleanupAxis();
 void drawAxis();
 }
-////////////////
 
 namespace RenderVars {
 	const float FOV = glm::radians(65.f);
@@ -435,12 +435,20 @@ namespace Shader
 	{
 		glUniformMatrix4fv(glGetUniformLocation(program, name.c_str()), 1, GL_FALSE, glm::value_ptr(matrix));
 	}
+
+	void SetFloat(unsigned int program, const std::string& name, float value)
+	{
+		glUniform1f(glGetUniformLocation(program, name.c_str()), value);
+	}
 }
 
 namespace Octahedrons
 {
 	unsigned int vao, vbo;
 	unsigned int program;
+
+	glm::vec3 points[20];
+	glm::vec3 velocities[20];
 
 	glm::mat4& view = RV::_modelView;
 	glm::mat4& projection = RV::_projection;
@@ -453,12 +461,14 @@ namespace Octahedrons
 		glGenBuffers(1, &vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-		glm::vec3 points[20];
 		for (auto& point : points)
 		{
 			point = { (rand() % 1000) / 100.f, (rand() % 1000) / 100.f,  (rand() % 1000) / 100.f };
 			point -= 5;
 		}
+
+		for (auto& velocity : velocities)
+			velocity = { (rand() % 1000) / 1000.f, (rand() % 1000) / 1000.f,  (rand() % 1000) / 1000.f };
 
 		glBufferData(GL_ARRAY_BUFFER, sizeof(points), static_cast<float*>(&points[0].x), GL_STATIC_DRAW);
 
@@ -473,8 +483,25 @@ namespace Octahedrons
 		program = Shader::CreateProgram(vertex_shader, fragment_shader, geometry_shader);
 	}
 
-	void Draw()
+	void Draw(float dt)
 	{
+		for (int i = 0; i < 20; i++)
+		{
+			points[i] += velocities[i] * dt;
+
+			if (points[i].x < -5 || points[i].x > 5)
+				velocities[i].x *= -1;
+
+			if (points[i].y < -5 || points[i].y > 5)
+				velocities[i].y *= -1;
+
+			if (points[i].z < -5 || points[i].z > 5)
+				velocities[i].z *= -1;
+		}
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(points), static_cast<float*>(&points[0].x), GL_STATIC_DRAW);
+
 		glBindVertexArray(vao);
 
 		glUseProgram(program);
@@ -590,7 +617,7 @@ void GLrender(float dt)
 	switch (scene)
 	{
 	case Scene::EXERCISE_1:
-		Octahedrons::Draw();
+		Octahedrons::Draw(dt);
 		break;
 
 	case Scene::EXERCISE_2:
