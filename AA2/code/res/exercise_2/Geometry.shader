@@ -5,7 +5,7 @@
 #version 330 core
 
 layout(points) in;
-layout(triangle_strip, max_vertices = 82) out;
+layout(triangle_strip, max_vertices = 86) out;
 
 out vec4 face_color;
 
@@ -64,7 +64,7 @@ void emit_hexagon(Hexagon hex, vec4 color)
 
 vec3 find_baricenter(Hexagon hex)
 {
-	return (hex.vertices[0] + hex.vertices[1]) / 2;
+	return (hex.vertices[0] + hex.vertices[3]) / 2;
 }
 
 void main()
@@ -159,7 +159,7 @@ void main()
 	hex_bot_left.vertices[4] = quad_back_left.vertices[3];
 	hex_bot_left.vertices[5] = quad_bot.vertices[2];
 
-
+	
 
 	// Find hexagon center.
 	vec3 hex_center = find_baricenter(hex_top_front);
@@ -168,16 +168,14 @@ void main()
 	for (int i = 0; i < 6; i++)
 	{
 		vec3 dir = hex_center - hex_top_front.vertices[i];
-		hex_top_front.vertices[i] = hex_top_front.vertices[i] + dir;
+		hex_top_front.vertices[i] = hex_top_front.vertices[i] + dir * 0.5f;
 	}
 
-	// quad_top[2, 3], quad_front_left[1, 0], quad_front_right[1, 2]
-	quad_top.vertices[2] = hex_top_front.vertices[0];
-	quad_top.vertices[3] = hex_top_front.vertices[5];
-	quad_front_left.vertices[1] = hex_top_front.vertices[1];
-	quad_front_left.vertices[0] = hex_top_front.vertices[2];
-	quad_front_right.vertices[2] = hex_top_front.vertices[3];
-	quad_front_right.vertices[1] = hex_top_front.vertices[4];
+	emit_vertex(hex_bot_front.vertices[2], red);
+	emit_vertex(hex_top_front.vertices[3], red);
+	emit_vertex(hex_bot_front.vertices[3], red);
+	emit_vertex(hex_top_front.vertices[2], red);
+	EndPrimitive();
 
 
 	// Emit hexagon faces.
