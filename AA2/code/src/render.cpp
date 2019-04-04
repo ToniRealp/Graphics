@@ -525,6 +525,8 @@ namespace HoneyCombs
 	glm::mat4& view = RV::_modelView;
 	glm::mat4& projection = RV::_projection;
 
+	float alpha = 0.0f;
+
 	void Setup()
 	{
 		glGenVertexArrays(1, &vao);
@@ -553,13 +555,17 @@ namespace HoneyCombs
 		program = Shader::CreateProgram(vertex_shader, fragment_shader, geometry_shader);
 	}
 
-	void Draw()
+	void Draw(float dt)
 	{
 		glBindVertexArray(vao);
 
 		glUseProgram(program);
 		Shader::SetMat4(program, "view", view);
 		Shader::SetMat4(program, "projection", projection);
+
+		alpha += dt;
+		if (alpha >= glm::two_pi<float>()) alpha = 0;
+		Shader::SetFloat(program, "alpha", (glm::sin(alpha) + 1.0f) / 2.0f);
 
 		glDrawArrays(GL_POINTS, 0, 20);
 	}
@@ -621,7 +627,7 @@ void GLrender(float dt)
 		break;
 
 	case Scene::EXERCISE_2:
-		HoneyCombs::Draw();
+		HoneyCombs::Draw(dt);
 		break;
 
 	case Scene::EXERCISE_3:
