@@ -219,19 +219,36 @@ void main()
 	shrink(hex_bot_back);
 
 
-	emit_quad(hex_bot_front.vertices[2], hex_top_front.vertices[3], hex_bot_front.vertices[3], hex_top_front.vertices[2]);
 	emit_quad(hex_top_front.vertices[5], hex_top_front.vertices[4], hex_top_right.vertices[0], hex_top_right.vertices[1]);
 	emit_quad(hex_top_left.vertices[5], hex_top_left.vertices[4], hex_top_front.vertices[0], hex_top_front.vertices[1]);
 	emit_quad(hex_top_right.vertices[5], hex_top_right.vertices[4], hex_top_back.vertices[0], hex_top_back.vertices[1]);
-
 	emit_quad(hex_top_left.vertices[1], hex_top_left.vertices[0], hex_top_back.vertices[4], hex_top_back.vertices[5]);
 
+	emit_quad(hex_bot_front.vertices[2], hex_top_front.vertices[3], hex_bot_front.vertices[3], hex_top_front.vertices[2]);
+	emit_quad(hex_bot_right.vertices[2], hex_top_right.vertices[3], hex_bot_right.vertices[3], hex_top_right.vertices[2]);
+	emit_quad(hex_bot_back.vertices[2], hex_top_back.vertices[3], hex_bot_back.vertices[3], hex_top_back.vertices[2]);
+	emit_quad(hex_bot_left.vertices[2], hex_top_left.vertices[3], hex_bot_left.vertices[3], hex_top_left.vertices[2]);
+
+	emit_quad(hex_bot_front.vertices[0], hex_bot_right.vertices[5], hex_bot_front.vertices[1], hex_bot_right.vertices[4]);
+	emit_quad(hex_bot_right.vertices[0], hex_bot_back.vertices[5], hex_bot_right.vertices[1], hex_bot_back.vertices[4]);
+	emit_quad(hex_bot_back.vertices[0], hex_bot_left.vertices[5], hex_bot_back.vertices[1], hex_bot_left.vertices[4]);
+	emit_quad(hex_bot_left.vertices[0], hex_bot_front.vertices[5], hex_bot_left.vertices[1], hex_bot_front.vertices[4]);
+
+	
 	emit_octagon(hex_top_front.vertices[0], hex_top_front.vertices[5], hex_top_right.vertices[0], hex_top_right.vertices[5],
 				 hex_top_back.vertices[0], hex_top_back.vertices[5], hex_top_left.vertices[0], hex_top_left.vertices[5]);
 
-	emit_octagon(hex_top_front.vertices[0], hex_top_front.vertices[5], hex_top_right.vertices[0], hex_top_right.vertices[5],
-		hex_top_back.vertices[0], hex_top_back.vertices[5], hex_top_left.vertices[0], hex_top_left.vertices[5]);
+	emit_octagon(hex_bot_front.vertices[2], hex_bot_front.vertices[1], hex_bot_right.vertices[4], hex_bot_right.vertices[3],
+		hex_top_right.vertices[2], hex_top_right.vertices[1], hex_top_front.vertices[4], hex_top_front.vertices[3]);
+	emit_octagon(hex_bot_right.vertices[2], hex_bot_right.vertices[1], hex_bot_back.vertices[4], hex_bot_back.vertices[3],
+		hex_top_back.vertices[2], hex_top_back.vertices[1], hex_top_right.vertices[4], hex_top_right.vertices[3]);
+	emit_octagon(hex_bot_back.vertices[2], hex_bot_back.vertices[1], hex_bot_left.vertices[4], hex_bot_left.vertices[3],
+		hex_top_left.vertices[2], hex_top_left.vertices[1], hex_top_back.vertices[4], hex_top_back.vertices[3]);
+	emit_octagon(hex_bot_left.vertices[2], hex_bot_left.vertices[1], hex_bot_front.vertices[4], hex_bot_front.vertices[3],
+		hex_top_front.vertices[2], hex_top_front.vertices[1], hex_top_left.vertices[4], hex_top_left.vertices[3]);
 
+	emit_octagon(hex_bot_front.vertices[0], hex_bot_front.vertices[5], hex_bot_right.vertices[0], hex_bot_right.vertices[5],
+		hex_bot_back.vertices[0], hex_bot_back.vertices[5], hex_bot_left.vertices[0], hex_bot_left.vertices[5]);
 
 	// Emit hexagon faces.
 	emit_hexagon(hex_top_front, blue);
@@ -243,5 +260,4 @@ void main()
 	emit_hexagon(hex_bot_right, blue);
 	emit_hexagon(hex_bot_back, blue);
 	emit_hexagon(hex_bot_left, blue);
-	
 }
