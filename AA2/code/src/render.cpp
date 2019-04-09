@@ -594,9 +594,9 @@ namespace Voronoid
 		glGenBuffers(1, &vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-		glm::vec3 points[9];
+		glm::vec3 points[1];
 
-		int i = 0;
+		/*int i = 0;
 		for (int x = -1; x < 2; ++x)
 		{
 			for (int y = -1; y < 2; ++y)
@@ -604,7 +604,7 @@ namespace Voronoid
 				points[i] = { x * 2, y * 2, 0 };
 				i++;
 			}
-		}
+		}*/
 
 		glBufferData(GL_ARRAY_BUFFER, sizeof(points), static_cast<float*>(&points[0].x), GL_STATIC_DRAW);
 
@@ -628,7 +628,7 @@ namespace Voronoid
 		Shader::SetMat4(program, "view", view);
 		Shader::SetMat4(program, "projection", projection);
 
-		glDrawArrays(GL_LINES, 0, 16);
+		glDrawArrays(GL_LINES, 0, 32);
 	}
 
 	void Clean()
