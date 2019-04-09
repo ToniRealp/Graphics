@@ -13,7 +13,7 @@
 #include <sstream>
 #include <iostream>
 #include <algorithm>
-
+#include <array>
 
 
 namespace ImGui {
@@ -576,6 +576,67 @@ namespace HoneyCombs
 	}
 }
 
+namespace Voronoid
+{
+	unsigned int vao, vbo;
+	unsigned int program;
+
+	glm::mat4& view = RV::_modelView;
+	glm::mat4& projection = RV::_projection;
+
+	float alpha = 0.0f;
+
+	void Setup()
+	{
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+
+		glGenBuffers(1, &vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+		glm::vec3 points[9];
+
+		int i = 0;
+		for (int x = -1; x < 2; ++x)
+		{
+			for (int y = -1; y < 2; ++y)
+			{
+				points[i] = { x * 2, y * 2, 0 };
+				i++;
+			}
+		}
+
+		glBufferData(GL_ARRAY_BUFFER, sizeof(points), static_cast<float*>(&points[0].x), GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+
+
+		const auto vertex_shader = Shader::ParseShader("res/exercise_3/Vertex.shader");
+		const auto fragment_shader = Shader::ParseShader("res/exercise_3/Fragment.shader");
+		const auto geometry_shader = Shader::ParseShader("res/exercise_3/Geometry.shader");
+
+		glPointSize(10);
+		program = Shader::CreateProgram(vertex_shader, fragment_shader, geometry_shader);
+	}
+
+	void Draw(float dt)
+	{
+		glBindVertexArray(vao);
+
+		glUseProgram(program);
+		Shader::SetMat4(program, "view", view);
+		Shader::SetMat4(program, "projection", projection);
+
+		glDrawArrays(GL_POINTS, 0, 9);
+	}
+
+	void Clean()
+	{
+		glDeleteBuffers(1, &vbo);
+	}
+}
+
 enum class Scene { EXERCISE_1, EXERCISE_2, EXERCISE_3 };
 
 Scene scene{ Scene::EXERCISE_1 };
@@ -596,6 +657,7 @@ void GLinit(int width, int height)
 
 	Octahedrons::Setup();
 	HoneyCombs::Setup();
+	Voronoid::Setup();
 }
 
 void GLcleanup()
@@ -605,6 +667,7 @@ void GLcleanup()
 
 	Octahedrons::Clean();
 	HoneyCombs::Clean();
+	Voronoid::Clean();
 }
 
 void GLrender(float dt)
@@ -631,7 +694,7 @@ void GLrender(float dt)
 		break;
 
 	case Scene::EXERCISE_3:
-		// TODO: Ejercicio 3
+		Voronoid::Draw(dt);
 		break;
 	}
 
