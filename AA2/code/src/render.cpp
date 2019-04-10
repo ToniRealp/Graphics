@@ -657,9 +657,11 @@ namespace Voronoid
 		Shader::SetMat4(program, "projection", projection);
 
 		float random_values[8];
+		alpha += dt / 2.0f;
+		if (alpha >= glm::two_pi<float>()) alpha = 0;
 		for (int i = 0; i < 8; ++i)
 		{
-			random_values[i] = static_cast<float>(rand() % 500) / 10000.0f;
+			random_values[i] = glm::perlin(glm::vec2(sin(i * alpha) / 2.f, sin(i * alpha) / 2.f));
 			std::cout << random_values[i] << std::endl;
 		}
 
