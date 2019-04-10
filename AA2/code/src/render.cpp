@@ -536,10 +536,43 @@ namespace HoneyCombs
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
 		glm::vec3 points[20];
-		for (auto& point : points)
+		bool left = true;
+		float x = -2.5f;
+		for (int i = 0; i < 20; i++)
 		{
-			point = { (rand() % 1000) / 100.f, (rand() % 1000) / 100.f,  (rand() % 1000) / 100.f };
-			point -= 5;
+			if (i >= 15)
+			{
+				if (left)
+					points[i] = { x, 2 , 0.9f };
+				else
+					points[i] = { x, 2 , -0.9f };
+			}
+			else if (i >= 10)
+			{
+				if (left)
+					points[i] = { x, 1 , 0.9f };
+				else
+					points[i] = { x, 1 , -0.9f };
+			}
+			else if (i >= 5)
+			{
+				if (left)
+					points[i] = { x, 0 , 0.9f };
+				else
+					points[i] = { x, 0 , -0.9f };
+			}
+			else
+			{
+				if (left)
+					points[i] = { x, -1 , 0.9f };
+				else
+					points[i] = { x, -1 , -0.9f };
+			}
+
+			left = !left;
+			x++;
+			if (x == 2.5f)
+				x = -2.5f;
 		}
 
 		glBufferData(GL_ARRAY_BUFFER, sizeof(points), static_cast<float*>(&points[0].x), GL_STATIC_DRAW);
