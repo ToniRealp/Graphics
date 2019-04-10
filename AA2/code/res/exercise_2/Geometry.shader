@@ -5,7 +5,7 @@
 #version 330 core
 
 layout(points) in;
-layout(triangle_strip, max_vertices = 1000) out;
+layout(triangle_strip, max_vertices = 256) out;
 
 uniform mat4 projection;
 uniform mat4 view;

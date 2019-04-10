@@ -1,12 +1,17 @@
 #version 330 core
 
 layout(points) in;
-layout(points, max_vertices = 16) out;
+layout(triangle_strip, max_vertices = 8) out;
 
 
 uniform mat4 projection;
 uniform mat4 view;
 
+void emit_vertex(vec2 vertex)
+{
+	gl_Position = projection * view * vec4(vertex, 0, 1.0);
+	EmitVertex();
+}
 
 
 void main()
@@ -62,15 +67,22 @@ void main()
 	// Intersections
 	// y1 = ax + c; y2 = bx + d
 	// x = (d - c) / (a - b)
+
+	vec2 intersections[8];
 	for (int i = 0; i < 8; i++)
 	{
-
-		float x = (intercepts[int(mod(i + 1,8))] - intercepts[i]) / (slopes[i] - slopes[int(mod(i + 1,8))]);
-		float y = slopes[i] * x + intercepts[i];
-
-		gl_Position = projection * view * vec4(x, y, 0, 1.0);
-		EmitVertex();
-
-		EndPrimitive();
+		intersections[i].x = (intercepts[int(mod(i + 1,8))] - intercepts[i]) / (slopes[i] - slopes[int(mod(i + 1,8))]);
+		intersections[i].y = slopes[i] * intersections[i].x + intercepts[i];
 	}
+
+	emit_vertex(intersections[1]);
+	emit_vertex(intersections[0]);
+	emit_vertex(intersections[2]);
+	emit_vertex(intersections[7]);
+	emit_vertex(intersections[3]);
+	emit_vertex(intersections[6]);
+	emit_vertex(intersections[4]);
+	emit_vertex(intersections[5]);
+
+	EndPrimitive();
 }
