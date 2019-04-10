@@ -5,9 +5,7 @@
 #version 330 core
 
 layout(points) in;
-layout(triangle_strip, max_vertices = 128) out;
-
-out vec4 face_color;
+layout(triangle_strip, max_vertices = 1000) out;
 
 uniform mat4 projection;
 uniform mat4 view;
@@ -18,62 +16,62 @@ uniform float alpha;
 float h = 1.0f;
 float delta = 0.3f;
 
+out vec3 face_color;
 
-vec4 red = vec4(1.0, 0.0, 0.0, 1.0);
-vec4 blue = vec4(0.0, 0.0, 1.0, 1.0);
-vec4 green = vec4(0.0, 1.0, 0.0, 1.0);
-
+vec3 red = vec3(1.0, 0.0, 0.0);
+vec3 blue = vec3(0.0, 0.0, 1.0);
+vec3 green = vec3(0.0, 1.0, 0.0);
 
 struct Quad { vec3 vertices[4]; };
 struct Hexagon { vec3 vertices[6]; };
 
-
-
-void emit_vertex(vec3 vertex, vec4 color)
+void emit_vertex(vec3 vertex)
 {
 	gl_Position = projection * view * vec4(vertex, 1.0);
-	face_color = color;
 	EmitVertex();
 }
 
-void emit_hexagon(Hexagon hex, vec4 color)
+void emit_hexagon(Hexagon hex)
 {
-	emit_vertex(hex.vertices[1], color);
-	emit_vertex(hex.vertices[2], color);
-	emit_vertex(hex.vertices[0], color);
-	emit_vertex(hex.vertices[3], color);
-	emit_vertex(hex.vertices[5], color);
-	emit_vertex(hex.vertices[4], color);
+	face_color = blue;
+	emit_vertex(hex.vertices[1]);
+	emit_vertex(hex.vertices[2]);
+	emit_vertex(hex.vertices[0]);
+	emit_vertex(hex.vertices[3]);
+	emit_vertex(hex.vertices[5]);
+	emit_vertex(hex.vertices[4]);
 
 	EndPrimitive();
 }
 
 void emit_octagon(vec3 v1, vec3 v2, vec3 v3, vec3 v4, vec3 v5, vec3 v6, vec3 v7, vec3 v8)
 {
-	emit_vertex(v2, green);
-	emit_vertex(v3, green);
-	emit_vertex(v1, green);
-	emit_vertex(v4, green);
-	emit_vertex(v8, green);
-	emit_vertex(v5, green);
-	emit_vertex(v7, green);
-	emit_vertex(v6, green);
+	face_color = green;
+	emit_vertex(v2);
+	emit_vertex(v3);
+	emit_vertex(v1);
+	emit_vertex(v4);
+	emit_vertex(v8);
+	emit_vertex(v5);
+	emit_vertex(v7);
+	emit_vertex(v6);
 
 	EndPrimitive();
 }
 
 void emit_quad(vec3 v1, vec3 v2, vec3 v3, vec3 v4)
 {
-	emit_vertex(v1, red);
-	emit_vertex(v2, red);
-	emit_vertex(v3, red);
-	emit_vertex(v4, red);
+	face_color = red;
+	emit_vertex(v1);
+	emit_vertex(v2);
+	emit_vertex(v3);
+	emit_vertex(v4);
 
 	EndPrimitive();
 }
 
 
-Quad get_quad(vec3 v1, vec3 v2, vec3 v3, vec3 v4, vec3 v5, vec4 color)
+Quad get_quad(vec3 v1, vec3 v2, vec3 v3, vec3 v4, vec3 v5)
 {
 	Quad quad;
 	quad.vertices[0] = v1 + (v2 - v1) * delta;
@@ -129,15 +127,14 @@ void main()
 	vec3 front_right_vertex = center + vec3(1.0, 0.0, 1.0) * h;
 
 
+	Quad quad_top = get_quad(top_vertex, back_right_vertex, back_left_vertex, front_left_vertex, front_right_vertex);
+	Quad quad_bot = get_quad(bot_vertex, front_right_vertex, front_left_vertex, back_left_vertex, back_right_vertex);
 
-	Quad quad_top = get_quad(top_vertex, back_right_vertex, back_left_vertex, front_left_vertex, front_right_vertex, red);
-	Quad quad_bot = get_quad(bot_vertex, front_right_vertex, front_left_vertex, back_left_vertex, back_right_vertex, red);
+	Quad quad_front_right = get_quad(front_right_vertex, back_right_vertex, top_vertex, front_left_vertex, bot_vertex);
+	Quad quad_front_left = get_quad(front_left_vertex, front_right_vertex, top_vertex, back_left_vertex, bot_vertex);
 
-	Quad quad_front_right = get_quad(front_right_vertex, back_right_vertex, top_vertex, front_left_vertex, bot_vertex, red);
-	Quad quad_front_left = get_quad(front_left_vertex, front_right_vertex, top_vertex, back_left_vertex, bot_vertex, red);
-
-	Quad quad_back_right = get_quad(back_right_vertex, back_left_vertex, top_vertex, front_right_vertex, bot_vertex, red);
-	Quad quad_back_left = get_quad(back_left_vertex, front_left_vertex, top_vertex, back_right_vertex, bot_vertex, red);
+	Quad quad_back_right = get_quad(back_right_vertex, back_left_vertex, top_vertex, front_right_vertex, bot_vertex);
+	Quad quad_back_left = get_quad(back_left_vertex, front_left_vertex, top_vertex, back_right_vertex, bot_vertex);
 	
 
 
@@ -206,8 +203,6 @@ void main()
 	hex_bot_left.vertices[3] = quad_back_left.vertices[0];
 	hex_bot_left.vertices[4] = quad_back_left.vertices[3];
 	hex_bot_left.vertices[5] = quad_bot.vertices[2];
-
-	
 	
 	shrink(hex_top_front);
 	shrink(hex_top_right);
@@ -218,7 +213,7 @@ void main()
 	shrink(hex_bot_left);
 	shrink(hex_bot_back);
 
-
+	//Quads
 	emit_quad(hex_top_front.vertices[5], hex_top_front.vertices[4], hex_top_right.vertices[0], hex_top_right.vertices[1]);
 	emit_quad(hex_top_left.vertices[5], hex_top_left.vertices[4], hex_top_front.vertices[0], hex_top_front.vertices[1]);
 	emit_quad(hex_top_right.vertices[5], hex_top_right.vertices[4], hex_top_back.vertices[0], hex_top_back.vertices[1]);
@@ -234,10 +229,11 @@ void main()
 	emit_quad(hex_bot_back.vertices[0], hex_bot_left.vertices[5], hex_bot_back.vertices[1], hex_bot_left.vertices[4]);
 	emit_quad(hex_bot_left.vertices[0], hex_bot_front.vertices[5], hex_bot_left.vertices[1], hex_bot_front.vertices[4]);
 
-	
+	//Top Octagon
 	emit_octagon(hex_top_front.vertices[0], hex_top_front.vertices[5], hex_top_right.vertices[0], hex_top_right.vertices[5],
-				 hex_top_back.vertices[0], hex_top_back.vertices[5], hex_top_left.vertices[0], hex_top_left.vertices[5]);
+		hex_top_back.vertices[0], hex_top_back.vertices[5], hex_top_left.vertices[0], hex_top_left.vertices[5]);
 
+	//Side octagons
 	emit_octagon(hex_bot_front.vertices[2], hex_bot_front.vertices[1], hex_bot_right.vertices[4], hex_bot_right.vertices[3],
 		hex_top_right.vertices[2], hex_top_right.vertices[1], hex_top_front.vertices[4], hex_top_front.vertices[3]);
 	emit_octagon(hex_bot_right.vertices[2], hex_bot_right.vertices[1], hex_bot_back.vertices[4], hex_bot_back.vertices[3],
@@ -247,17 +243,18 @@ void main()
 	emit_octagon(hex_bot_left.vertices[2], hex_bot_left.vertices[1], hex_bot_front.vertices[4], hex_bot_front.vertices[3],
 		hex_top_front.vertices[2], hex_top_front.vertices[1], hex_top_left.vertices[4], hex_top_left.vertices[3]);
 
-	emit_octagon(hex_bot_front.vertices[0], hex_bot_front.vertices[5], hex_bot_right.vertices[0], hex_bot_right.vertices[5],
-		hex_bot_back.vertices[0], hex_bot_back.vertices[5], hex_bot_left.vertices[0], hex_bot_left.vertices[5]);
+	//Bot octagon
+	emit_octagon(hex_bot_front.vertices[0], hex_bot_front.vertices[5], hex_bot_left.vertices[0], hex_bot_left.vertices[5],
+		hex_bot_back.vertices[0], hex_bot_back.vertices[5], hex_bot_right.vertices[0], hex_bot_right.vertices[5]);
 
-	// Emit hexagon faces.
-	emit_hexagon(hex_top_front, blue);
-	emit_hexagon(hex_top_right, blue);
-	emit_hexagon(hex_top_back, blue);
-	emit_hexagon(hex_top_left, blue);
+	//Hexagons
+	emit_hexagon(hex_top_front);
+	emit_hexagon(hex_top_right);
+	emit_hexagon(hex_top_back);
+	emit_hexagon(hex_top_left);
 	
-	emit_hexagon(hex_bot_front, blue);
-	emit_hexagon(hex_bot_right, blue);
-	emit_hexagon(hex_bot_back, blue);
-	emit_hexagon(hex_bot_left, blue);
+	emit_hexagon(hex_bot_front);
+	emit_hexagon(hex_bot_right);
+	emit_hexagon(hex_bot_back);
+	emit_hexagon(hex_bot_left);
 }
