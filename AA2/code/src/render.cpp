@@ -628,7 +628,7 @@ namespace Voronoid
 		Shader::SetMat4(program, "view", view);
 		Shader::SetMat4(program, "projection", projection);
 
-		glDrawArrays(GL_LINES, 0, 32);
+		glDrawArrays(GL_POINTS, 0, 32);
 	}
 
 	void Clean()
