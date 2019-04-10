@@ -1,6 +1,7 @@
 #include <GL\glew.h>
 #include <glm\gtc\type_ptr.hpp>
 #include <glm\gtc\matrix_transform.hpp>
+#include <glm/gtc/noise.hpp>
 #include <cstdio>
 #include <cassert>
 
@@ -440,6 +441,11 @@ namespace Shader
 	{
 		glUniform1f(glGetUniformLocation(program, name.c_str()), value);
 	}
+
+	void SetFloatArray(unsigned int program, const std::string& name, size_t count, float* values)
+	{
+		glUniform1fv(glGetUniformLocation(program, name.c_str()), count, values);
+	}
 }
 
 namespace Octahedrons
@@ -596,16 +602,6 @@ namespace Voronoid
 
 		glm::vec3 points[1];
 
-		/*int i = 0;
-		for (int x = -1; x < 2; ++x)
-		{
-			for (int y = -1; y < 2; ++y)
-			{
-				points[i] = { x * 2, y * 2, 0 };
-				i++;
-			}
-		}*/
-
 		glBufferData(GL_ARRAY_BUFFER, sizeof(points), static_cast<float*>(&points[0].x), GL_STATIC_DRAW);
 
 		glEnableVertexAttribArray(0);
@@ -616,7 +612,6 @@ namespace Voronoid
 		const auto fragment_shader = Shader::ParseShader("res/exercise_3/Fragment.shader");
 		const auto geometry_shader = Shader::ParseShader("res/exercise_3/Geometry.shader");
 
-		glPointSize(10);
 		program = Shader::CreateProgram(vertex_shader, fragment_shader, geometry_shader);
 	}
 
@@ -627,6 +622,15 @@ namespace Voronoid
 		glUseProgram(program);
 		Shader::SetMat4(program, "view", view);
 		Shader::SetMat4(program, "projection", projection);
+
+		float random_values[8];
+		for (int i = 0; i < 8; ++i)
+		{
+			random_values[i] = static_cast<float>(rand() % 500) / 10000.0f;
+			std::cout << random_values[i] << std::endl;
+		}
+
+		Shader::SetFloatArray(program, "random_values", 8, random_values);
 
 		glDrawArrays(GL_POINTS, 0, 1);
 	}
@@ -723,7 +727,7 @@ void GUI()
 				break;
 
 			case Scene::EXERCISE_3:
-				sceneName = "BORONOID";
+				sceneName = "VORONOID";
 				break;
 			}
 		}

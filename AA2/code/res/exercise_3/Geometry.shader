@@ -7,6 +7,8 @@ layout(triangle_strip, max_vertices = 8) out;
 uniform mat4 projection;
 uniform mat4 view;
 
+uniform float random_values[8];
+
 void emit_vertex(vec2 vertex)
 {
 	gl_Position = projection * view * vec4(vertex, 0, 1.0);
@@ -27,6 +29,11 @@ void main()
 	vertices[5] = vec2(center.x, center.y - 2);
 	vertices[6] = vec2(center.x - 2, center.y - 2);
 	vertices[7] = vec2(center.x - 3, center.y);
+
+	for (int i = 0; i < 8; i++)
+	{
+		vertices[i].x += random_values[i];
+	}
 
 	// Midpoints
 	vec2 midpoints[8];
