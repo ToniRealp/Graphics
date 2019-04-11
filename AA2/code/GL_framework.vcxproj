@@ -141,9 +141,12 @@ xcopy "$(ProjectDir)libs\SDL2.dll" "$(OutDir)" /y /d</Command>
     <ClCompile Include="src\render.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\exercise_3\Fragment.shader" />
-    <None Include="res\exercise_3\Geometry.shader" />
-    <None Include="res\exercise_3\Vertex.shader" />
+    <None Include="res\exercise_3\face\Fragment.shader" />
+    <None Include="res\exercise_3\face\Geometry.shader" />
+    <None Include="res\exercise_3\face\Vertex.shader" />
+    <None Include="res\exercise_3\lines\Fragment.shader" />
+    <None Include="res\exercise_3\lines\Geometry.shader" />
+    <None Include="res\exercise_3\lines\Vertex.shader" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

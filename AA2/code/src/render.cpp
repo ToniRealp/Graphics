@@ -618,12 +618,23 @@ namespace HoneyCombs
 namespace Voronoid
 {
 	unsigned int vao, vbo;
-	unsigned int program;
+	unsigned int program[2];
 
 	glm::mat4& view = RV::_modelView;
 	glm::mat4& projection = RV::_projection;
 
 	float alpha = 0.0f;
+	float random_values[8];
+
+	void GenerateRandom(float dt)
+	{
+		alpha += dt / 2.0f;
+		if (alpha >= glm::two_pi<float>()) alpha = 0;
+		for (int i = 0; i < 8; ++i)
+		{
+			random_values[i] = glm::perlin(glm::vec2(sin(i * alpha) / 2.f, sin(i * alpha) / 2.f));
+		}
+	}
 
 	void Setup()
 	{
@@ -641,32 +652,35 @@ namespace Voronoid
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 
 
-		const auto vertex_shader = Shader::ParseShader("res/exercise_3/Vertex.shader");
-		const auto fragment_shader = Shader::ParseShader("res/exercise_3/Fragment.shader");
-		const auto geometry_shader = Shader::ParseShader("res/exercise_3/Geometry.shader");
+		auto vertex_shader = Shader::ParseShader("res/exercise_3/face/Vertex.shader");
+		auto fragment_shader = Shader::ParseShader("res/exercise_3/face/Fragment.shader");
+		auto geometry_shader = Shader::ParseShader("res/exercise_3/face/Geometry.shader");
+		program[0] = Shader::CreateProgram(vertex_shader, fragment_shader, geometry_shader);
 
-		program = Shader::CreateProgram(vertex_shader, fragment_shader, geometry_shader);
+		vertex_shader = Shader::ParseShader("res/exercise_3/lines/Vertex.shader");
+		fragment_shader = Shader::ParseShader("res/exercise_3/lines/Fragment.shader");
+		geometry_shader = Shader::ParseShader("res/exercise_3/lines/Geometry.shader");
+		program[1] = Shader::CreateProgram(vertex_shader, fragment_shader, geometry_shader);
 	}
 
 	void Draw(float dt)
 	{
+		GenerateRandom(dt);
+
 		glBindVertexArray(vao);
 
-		glUseProgram(program);
-		Shader::SetMat4(program, "view", view);
-		Shader::SetMat4(program, "projection", projection);
-
-		float random_values[8];
-		alpha += dt / 2.0f;
-		if (alpha >= glm::two_pi<float>()) alpha = 0;
-		for (int i = 0; i < 8; ++i)
-		{
-			random_values[i] = glm::perlin(glm::vec2(sin(i * alpha) / 2.f, sin(i * alpha) / 2.f));
-		}
-
-		Shader::SetFloatArray(program, "random_values", 8, random_values);
-
+		glUseProgram(program[0]);
+		Shader::SetMat4(program[0], "view", view);
+		Shader::SetMat4(program[0], "projection", projection);
+		Shader::SetFloatArray(program[0], "random_values", 8, random_values);
 		glDrawArrays(GL_POINTS, 0, 1);
+
+		glUseProgram(program[1]);
+		Shader::SetMat4(program[1], "view", view);
+		Shader::SetMat4(program[1], "projection", projection);
+		Shader::SetFloatArray(program[1], "random_values", 8, random_values);
+		glLineWidth(10.0f);
+		glDrawArrays(GL_LINES, 0, 1);
 	}
 
 	void Clean()
