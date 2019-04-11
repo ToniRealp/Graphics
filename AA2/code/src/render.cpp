@@ -359,6 +359,12 @@ void drawCube()
 }
 
 /////////////////////////////////////////////////
+namespace Config
+{
+	float randomIntensity = 0.0f;
+	float noiseIntensity = 2.0f;
+}
+
 
 namespace Shader
 {
@@ -493,7 +499,7 @@ namespace Octahedrons
 	{
 		for (int i = 0; i < 20; i++)
 		{
-			points[i] += velocities[i] * dt;
+			points[i] += velocities[i] * dt * Config::randomIntensity;
 
 			if (points[i].x < -5 || points[i].x > 5)
 				velocities[i].x *= -1;
@@ -629,7 +635,7 @@ namespace Voronoid
 
 	void GenerateRandom(float dt)
 	{
-		alpha += dt / 2.0f;
+		alpha += dt / Config::noiseIntensity;
 		if (alpha >= glm::two_pi<float>()) alpha = 0;
 		for (int i = 0; i < 8; ++i)
 		{
@@ -733,6 +739,7 @@ void GLrender(float dt)
 	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
 
 	RV::_MVP = RV::_projection * RV::_modelView;
+	glLineWidth(1.0f);
 	Axis::drawAxis();
 
 
@@ -760,6 +767,18 @@ void GUI()
 	ImGui::Begin("Physics Parameters", &show, 0);
 	{
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+		switch (scene)
+		{
+		case Scene::EXERCISE_1:
+			ImGui::DragFloat("Random Intensity", &Config::randomIntensity, 0.01f, 0.0f);
+			break;
+
+		case Scene::EXERCISE_3:
+			ImGui::DragFloat("Random Intensity", &Config::noiseIntensity, 0.01f, 1.0f, 10.0f);
+			break;
+		}
+
 
 		if (ImGui::Button("Change Exercise"))
 		{
