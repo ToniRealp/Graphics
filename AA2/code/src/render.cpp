@@ -516,6 +516,7 @@ namespace Octahedrons
 
 		glBindVertexArray(vao);
 
+		glFrontFace(GL_CCW);
 		glUseProgram(program);
 		Shader::SetMat4(program, "view", view);
 		Shader::SetMat4(program, "projection", projection);
@@ -605,6 +606,7 @@ namespace HoneyCombs
 	{
 		glBindVertexArray(vao);
 
+		glFrontFace(GL_CCW);
 		glUseProgram(program);
 		Shader::SetMat4(program, "view", view);
 		Shader::SetMat4(program, "projection", projection);
@@ -682,6 +684,7 @@ namespace Voronoid
 		Shader::SetFloatArray(program[0], "random_values", 8, random_values);
 		glDrawArrays(GL_POINTS, 0, 1);
 
+		glFrontFace(GL_CW);
 		glUseProgram(program[1]);
 		Shader::SetMat4(program[1], "view", view);
 		Shader::SetMat4(program[1], "projection", projection);

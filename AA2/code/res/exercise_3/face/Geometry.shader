@@ -1,18 +1,75 @@
 #version 330 core
 
 layout(points) in;
-layout(triangle_strip, max_vertices = 8) out;
+layout(triangle_strip, max_vertices = 128) out;
 
+out vec4 face_color;
 
 uniform mat4 projection;
 uniform mat4 view;
 
 uniform float random_values[8];
 
+float h = 2.0f;
+float delta = 0.5f;
+
+vec4 hexagon_color = vec4(0.2, 0.4, 0.6, 1.0);
+vec4 quad_color = vec4(0.114, 0.161, 0.318, 1.0);
+
 void emit_vertex(vec2 vertex)
 {
 	gl_Position = projection * view * vec4(vertex, 0, 1.0);
 	EmitVertex();
+}
+
+void emit_vertex(vec3 vertex)
+{
+	gl_Position = projection * view * vec4(vertex, 1.0);
+	EmitVertex();
+}
+
+vec3 midpoint(vec2 p1, vec2 p2)
+{
+	return vec3((p1 + p2) / 2.0f, 0);
+}
+
+vec3 emit_triangle(vec2 p1, vec2 p2)
+{
+	vec3 vertex = midpoint(p1, p2) + vec3(0.0, 0.0, -1.0) * delta;
+	
+	face_color = quad_color;
+	emit_vertex(p2);
+	emit_vertex(vertex);
+	emit_vertex(p1);
+	EndPrimitive();
+
+	return vertex;
+}
+
+void emit_hexagon(vec3 v1, vec2 v2, vec3 v3, vec2 v4, vec3 v5, vec3 v6)
+{
+	face_color = hexagon_color;
+	
+	emit_vertex(v1);
+	emit_vertex(v2);
+	emit_vertex(v3);
+	emit_vertex(v4);
+	emit_vertex(v5);
+	emit_vertex(v6);
+
+	EndPrimitive();
+}
+
+void emit_quad(vec3 v1, vec3 v2, vec3 v3, vec3 v4)
+{
+	face_color = quad_color;
+
+	emit_vertex(v1);
+	emit_vertex(v2);
+	emit_vertex(v3);
+	emit_vertex(v4);
+
+	EndPrimitive();
 }
 
 
@@ -70,16 +127,25 @@ void main()
 		intersections[i].y = slopes[i] * intersections[i].x + intercepts[i];
 	}
 
-	emit_vertex(intersections[1]);
-	emit_vertex(intersections[0]);
-	emit_vertex(intersections[2]);
-	emit_vertex(intersections[7]);
-	emit_vertex(intersections[3]);
-	emit_vertex(intersections[6]);
-	emit_vertex(intersections[4]);
-	emit_vertex(intersections[5]);
+	// -- QUAD --
+	vec3 direction = vec3(0.0, 0.0, -1.0);
 
+	vec3 quad_center = vec3(center, 0.0) + direction * h;
+	vec3 down_right = quad_center + vec3(1.0, -1.0, 0.0) * delta;
+	vec3 down_left = quad_center + vec3(-1.0, -1.0, 0.0) * delta;
+	vec3 up_right = quad_center + vec3(1.0, 1.0, 0.0) * delta;
+	vec3 up_left = quad_center + vec3(-1.0, 1.0, 0.0) * delta;
 
+	emit_quad(up_right, down_right, up_left, down_left);
 
-	EndPrimitive();
+	// -- FACES --
+	vec3 triangle_up_right = emit_triangle(intersections[1], intersections[2]);
+	vec3 triangle_down_right = emit_triangle(intersections[3], intersections[4]);
+	vec3 triangle_down_left = emit_triangle(intersections[5], intersections[6]);
+	vec3 triangle_up_left = emit_triangle(intersections[7], intersections[0]);
+
+	emit_hexagon(triangle_up_left, intersections[0], up_left, intersections[1], up_right, triangle_up_right);
+	emit_hexagon(triangle_up_right, intersections[2], up_right, intersections[3], down_right, triangle_down_right);
+	emit_hexagon(triangle_down_right, intersections[4], down_right, intersections[5], down_left, triangle_down_left);
+	emit_hexagon(triangle_down_left, intersections[6], down_left, intersections[7], up_left, triangle_up_left);
 }
