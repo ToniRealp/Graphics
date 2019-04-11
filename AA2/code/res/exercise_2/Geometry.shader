@@ -12,7 +12,6 @@ uniform mat4 view;
 
 uniform float alpha;
 
-
 float h = 1.0f;
 float delta = 0.333333333f;
 
@@ -120,11 +119,11 @@ void main()
 	vec3 top_vertex = center + vec3(0.0, 1.0, 0.0) * h;
 	vec3 bot_vertex = center + vec3(0.0, -1.0, 0.0) * h;
 
-	vec3 back_left_vertex = center + vec3(-0.7, 0.0, -0.7) * h;
-	vec3 back_right_vertex = center + vec3(0.7, 0.0, -0.7) * h;
+	vec3 back_left_vertex = center + vec3(0.0, 0.0, -1.0f) * h;
+	vec3 back_right_vertex = center + vec3(1, 0.0, 0.0) * h;
 
-	vec3 front_left_vertex = center + vec3(-0.7, 0.0, 0.7) * h;
-	vec3 front_right_vertex = center + vec3(0.7, 0.0, 0.7) * h;
+	vec3 front_left_vertex = center + vec3(-1.0, 0.0, 0.0) * h;
+	vec3 front_right_vertex = center + vec3(0.0, 0.0, 1.0f) * h;
 
 
 	Quad quad_top = get_quad(top_vertex, back_right_vertex, back_left_vertex, front_left_vertex, front_right_vertex);

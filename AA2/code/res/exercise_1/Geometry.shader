@@ -3,7 +3,7 @@
 layout(points) in;
 layout(triangle_strip, max_vertices = 82) out;
 
-out vec4 face_color;
+out vec3 face_color;
 
 uniform mat4 projection;
 uniform mat4 view;
@@ -12,8 +12,8 @@ uniform mat4 view;
 float h = 1.0f;
 float delta = 0.3333333f;
 
-vec4 hexagon_color = vec4(0.2, 0.4, 0.6, 1.0);
-vec4 quad_color = vec4(0.114, 0.161, 0.318, 1.0);
+vec3 hexagon_color = vec3(0.2, 0.4, 0.6);
+vec3 quad_color = vec3(0.114, 0.161, 0.318);
 
 
 struct Quad { vec3 vertices[4]; };
@@ -21,25 +21,25 @@ struct Hexagon { vec3 vertices[6]; };
 
 
 
-void emit_vertex(vec3 vertex, vec4 color)
+void emit_vertex(vec3 vertex)
 {
 	gl_Position = projection * view * vec4(vertex, 1.0);
-	face_color = color;
 	EmitVertex();
 }
 
 Quad emit_quad(vec3 v1, vec3 v2, vec3 v3, vec3 v4, vec3 v5)
 {
+	face_color = quad_color;
 	Quad quad;
 	quad.vertices[0] = v1 + (v2 - v1) * delta;
 	quad.vertices[1] = v1 + (v3 - v1) * delta;
 	quad.vertices[2] = v1 + (v4 - v1) * delta;
 	quad.vertices[3] = v1 + (v5 - v1) * delta;
 
-	emit_vertex(quad.vertices[0], quad_color);
-	emit_vertex(quad.vertices[1], quad_color);
-	emit_vertex(quad.vertices[3], quad_color);
-	emit_vertex(quad.vertices[2], quad_color);
+	emit_vertex(quad.vertices[0]);
+	emit_vertex(quad.vertices[1]);
+	emit_vertex(quad.vertices[3]);
+	emit_vertex(quad.vertices[2]);
 
 	EndPrimitive();
 
@@ -48,12 +48,13 @@ Quad emit_quad(vec3 v1, vec3 v2, vec3 v3, vec3 v4, vec3 v5)
 
 void emit_hexagon(Hexagon hex)
 {
-	emit_vertex(hex.vertices[1], hexagon_color);
-	emit_vertex(hex.vertices[2], hexagon_color);
-	emit_vertex(hex.vertices[0], hexagon_color);
-	emit_vertex(hex.vertices[3], hexagon_color);
-	emit_vertex(hex.vertices[5], hexagon_color);
-	emit_vertex(hex.vertices[4], hexagon_color);
+	face_color = hexagon_color;
+	emit_vertex(hex.vertices[1]);
+	emit_vertex(hex.vertices[2]);
+	emit_vertex(hex.vertices[0]);
+	emit_vertex(hex.vertices[3]);
+	emit_vertex(hex.vertices[5]);
+	emit_vertex(hex.vertices[4]);
 
 	EndPrimitive();
 }
