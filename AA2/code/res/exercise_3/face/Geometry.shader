@@ -30,15 +30,13 @@ void main()
 	vertices[6] = vec2(center.x - 2, center.y - 2);
 	vertices[7] = vec2(center.x - 3, center.y);
 
-	for (int i = 0; i < 8; i++)
-	{
-		vertices[i].x += random_values[i];
-	}
-
-	// Midpoints
+	// Compute midpoints.
 	vec2 midpoints[8];
 	for (int i = 0; i < 8; i++)
 	{
+		// Randomize position.
+		vertices[i].x += random_values[i];
+
 		midpoints[i] = (center + vertices[i]) / 2;
 	}
 
@@ -52,33 +50,23 @@ void main()
 		vec2 director = vertices[i] - center;
 		director = vec2(director.y, -1 * director.x);
 
-		// Compute slopes and intercepts.
+		// Singularity handling.
 		if (director.x == 0) {
 			director.x = 0.00001;
 		}
+
+		// Compute slopes and intercepts.
 		slopes[i] = director.y / director.x;
 		intercepts[i] = midpoints[i].y - slopes[i] * midpoints[i].x;
-
-
-		/*float y1 = slopes[i] * 100 + intercepts[i];
-		gl_Position = projection * view * vec4(100, y1, 0, 1.0);
-		EmitVertex();
-
-		float y2 = slopes[i] * -100 + intercepts[i];
-		gl_Position = projection * view * vec4(-100, y2, 0, 1.0);
-		EmitVertex();
-
-		EndPrimitive();*/
 	}
 
 	// Intersections
 	// y1 = ax + c; y2 = bx + d
 	// x = (d - c) / (a - b)
-
 	vec2 intersections[8];
 	for (int i = 0; i < 8; i++)
 	{
-		intersections[i].x = (intercepts[int(mod(i + 1,8))] - intercepts[i]) / (slopes[i] - slopes[int(mod(i + 1,8))]);
+		intersections[i].x = (intercepts[int(mod(i + 1, 8))] - intercepts[i]) / (slopes[i] - slopes[int(mod(i + 1, 8))]);
 		intersections[i].y = slopes[i] * intersections[i].x + intercepts[i];
 	}
 
@@ -90,6 +78,8 @@ void main()
 	emit_vertex(intersections[6]);
 	emit_vertex(intersections[4]);
 	emit_vertex(intersections[5]);
+
+
 
 	EndPrimitive();
 }
