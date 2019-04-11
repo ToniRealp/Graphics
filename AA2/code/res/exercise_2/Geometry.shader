@@ -14,13 +14,13 @@ uniform float alpha;
 
 
 float h = 1.0f;
-float delta = 0.3f;
+float delta = 0.333333333f;
 
 out vec3 face_color;
 
-vec3 red = vec3(1.0, 0.0, 0.0);
-vec3 blue = vec3(0.0, 0.0, 1.0);
-vec3 green = vec3(0.0, 1.0, 0.0);
+vec3 hexagon_color = vec3(0.2, 0.4, 0.6);
+vec3 quad_color = vec3(0.114, 0.161, 0.318);
+vec3 octagon_color = vec3(0.02, 0.027, 0.18);
 
 struct Quad { vec3 vertices[4]; };
 struct Hexagon { vec3 vertices[6]; };
@@ -33,7 +33,7 @@ void emit_vertex(vec3 vertex)
 
 void emit_hexagon(Hexagon hex)
 {
-	face_color = blue;
+	face_color = hexagon_color;
 	emit_vertex(hex.vertices[1]);
 	emit_vertex(hex.vertices[2]);
 	emit_vertex(hex.vertices[0]);
@@ -46,7 +46,7 @@ void emit_hexagon(Hexagon hex)
 
 void emit_octagon(vec3 v1, vec3 v2, vec3 v3, vec3 v4, vec3 v5, vec3 v6, vec3 v7, vec3 v8)
 {
-	face_color = green;
+	face_color = octagon_color;
 	emit_vertex(v2);
 	emit_vertex(v3);
 	emit_vertex(v1);
@@ -61,7 +61,7 @@ void emit_octagon(vec3 v1, vec3 v2, vec3 v3, vec3 v4, vec3 v5, vec3 v6, vec3 v7,
 
 void emit_quad(vec3 v1, vec3 v2, vec3 v3, vec3 v4)
 {
-	face_color = red;
+	face_color = quad_color;
 	emit_vertex(v1);
 	emit_vertex(v2);
 	emit_vertex(v3);
@@ -97,7 +97,7 @@ Hexagon get_hexagon(vec3 v1, vec3 v2, vec3 v3, vec3 v4, vec3 v5, vec3 v6)
 
 vec3 find_baricenter(Hexagon hex)
 {
-	return (hex.vertices[0] + hex.vertices[3]) / 2;
+	return (hex.vertices[1] + hex.vertices[4]) / 2;
 }
 
 void shrink(inout Hexagon hex)
@@ -115,16 +115,16 @@ void shrink(inout Hexagon hex)
 
 void main()
 {
-	vec3 center = gl_in[0].gl_Position.xyz;
+	vec3 center = gl_in[0].gl_Position.xyz; 
 
 	vec3 top_vertex = center + vec3(0.0, 1.0, 0.0) * h;
 	vec3 bot_vertex = center + vec3(0.0, -1.0, 0.0) * h;
 
-	vec3 back_left_vertex = center + vec3(-1.0, 0.0, -1.0) * h;
-	vec3 back_right_vertex = center + vec3(1.0, 0.0, -1.0) * h;
+	vec3 back_left_vertex = center + vec3(-0.7, 0.0, -0.7) * h;
+	vec3 back_right_vertex = center + vec3(0.7, 0.0, -0.7) * h;
 
-	vec3 front_left_vertex = center + vec3(-1.0, 0.0, 1.0) * h;
-	vec3 front_right_vertex = center + vec3(1.0, 0.0, 1.0) * h;
+	vec3 front_left_vertex = center + vec3(-0.7, 0.0, 0.7) * h;
+	vec3 front_right_vertex = center + vec3(0.7, 0.0, 0.7) * h;
 
 
 	Quad quad_top = get_quad(top_vertex, back_right_vertex, back_left_vertex, front_left_vertex, front_right_vertex);
@@ -213,7 +213,7 @@ void main()
 	shrink(hex_bot_left);
 	shrink(hex_bot_back);
 
-	//Quads
+	// Quads.
 	emit_quad(hex_top_front.vertices[5], hex_top_front.vertices[4], hex_top_right.vertices[0], hex_top_right.vertices[1]);
 	emit_quad(hex_top_left.vertices[5], hex_top_left.vertices[4], hex_top_front.vertices[0], hex_top_front.vertices[1]);
 	emit_quad(hex_top_right.vertices[5], hex_top_right.vertices[4], hex_top_back.vertices[0], hex_top_back.vertices[1]);
@@ -229,11 +229,11 @@ void main()
 	emit_quad(hex_bot_back.vertices[0], hex_bot_left.vertices[5], hex_bot_back.vertices[1], hex_bot_left.vertices[4]);
 	emit_quad(hex_bot_left.vertices[0], hex_bot_front.vertices[5], hex_bot_left.vertices[1], hex_bot_front.vertices[4]);
 
-	//Top Octagon
+	// Top Octagon.
 	emit_octagon(hex_top_front.vertices[0], hex_top_front.vertices[5], hex_top_right.vertices[0], hex_top_right.vertices[5],
 		hex_top_back.vertices[0], hex_top_back.vertices[5], hex_top_left.vertices[0], hex_top_left.vertices[5]);
 
-	//Side octagons
+	// Side Octagons.
 	emit_octagon(hex_bot_front.vertices[2], hex_bot_front.vertices[1], hex_bot_right.vertices[4], hex_bot_right.vertices[3],
 		hex_top_right.vertices[2], hex_top_right.vertices[1], hex_top_front.vertices[4], hex_top_front.vertices[3]);
 	emit_octagon(hex_bot_right.vertices[2], hex_bot_right.vertices[1], hex_bot_back.vertices[4], hex_bot_back.vertices[3],
@@ -243,11 +243,11 @@ void main()
 	emit_octagon(hex_bot_left.vertices[2], hex_bot_left.vertices[1], hex_bot_front.vertices[4], hex_bot_front.vertices[3],
 		hex_top_front.vertices[2], hex_top_front.vertices[1], hex_top_left.vertices[4], hex_top_left.vertices[3]);
 
-	//Bot octagon
+	// Bot Octagon.
 	emit_octagon(hex_bot_front.vertices[0], hex_bot_front.vertices[5], hex_bot_left.vertices[0], hex_bot_left.vertices[5],
 		hex_bot_back.vertices[0], hex_bot_back.vertices[5], hex_bot_right.vertices[0], hex_bot_right.vertices[5]);
 
-	//Hexagons
+	// Hexagons
 	emit_hexagon(hex_top_front);
 	emit_hexagon(hex_top_right);
 	emit_hexagon(hex_top_back);

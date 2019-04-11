@@ -662,7 +662,6 @@ namespace Voronoid
 		for (int i = 0; i < 8; ++i)
 		{
 			random_values[i] = glm::perlin(glm::vec2(sin(i * alpha) / 2.f, sin(i * alpha) / 2.f));
-			std::cout << random_values[i] << std::endl;
 		}
 
 		Shader::SetFloatArray(program, "random_values", 8, random_values);
