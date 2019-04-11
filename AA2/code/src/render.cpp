@@ -680,8 +680,8 @@ namespace Voronoid
 		Shader::SetMat4(program[1], "view", view);
 		Shader::SetMat4(program[1], "projection", projection);
 		Shader::SetFloatArray(program[1], "random_values", 8, random_values);
-		glLineWidth(10.0f);
-		glDrawArrays(GL_LINES, 0, 1);
+		glLineWidth(3.0f);
+		glDrawArrays(GL_POINTS, 0, 1);
 	}
 
 	void Clean()
