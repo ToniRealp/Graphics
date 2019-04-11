@@ -543,42 +543,43 @@ namespace HoneyCombs
 
 		glm::vec3 points[20];
 		bool left = true;
-		float x = -2.5f;
+		float x = -0.707*2;
+		float z = 0.354f;
 		for (int i = 0; i < 20; i++)
 		{
 			if (i >= 15)
 			{
 				if (left)
-					points[i] = { x, 2 , 0.9f };
+					points[i] = { x, 1.061f , z };
 				else
-					points[i] = { x, 2 , -0.9f };
+					points[i] = { x, 1.061f , -z };
 			}
 			else if (i >= 10)
 			{
 				if (left)
-					points[i] = { x, 1 , 0.9f };
+					points[i] = { x, 0.354f , z };
 				else
-					points[i] = { x, 1 , -0.9f };
+					points[i] = { x, 0.354f , -z };
 			}
 			else if (i >= 5)
 			{
 				if (left)
-					points[i] = { x, 0 , 0.9f };
+					points[i] = { x, -0.354f , z };
 				else
-					points[i] = { x, 0 , -0.9f };
+					points[i] = { x, -0.354f , -z };
 			}
 			else
 			{
 				if (left)
-					points[i] = { x, -1 , 0.9f };
+					points[i] = { x, -1.061f , z };
 				else
-					points[i] = { x, -1 , -0.9f };
+					points[i] = { x, -1.061f , -z };
 			}
 
 			left = !left;
-			x++;
-			if (x == 2.5f)
-				x = -2.5f;
+			x += 0.707;
+			if (x >= 0.707 * 2)
+				x = 0.707 * -2;
 		}
 
 		glBufferData(GL_ARRAY_BUFFER, sizeof(points), static_cast<float*>(&points[0].x), GL_STATIC_DRAW);
