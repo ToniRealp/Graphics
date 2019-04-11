@@ -212,7 +212,7 @@ void main()
 	shrink(hex_bot_left);
 	shrink(hex_bot_back);
 
-	// Quads.
+	// -- QUADS -------------------------------------------------------------------------
 	emit_quad(hex_top_front.vertices[5], hex_top_front.vertices[4], hex_top_right.vertices[0], hex_top_right.vertices[1]);
 	emit_quad(hex_top_left.vertices[5], hex_top_left.vertices[4], hex_top_front.vertices[0], hex_top_front.vertices[1]);
 	emit_quad(hex_top_right.vertices[5], hex_top_right.vertices[4], hex_top_back.vertices[0], hex_top_back.vertices[1]);
@@ -228,7 +228,7 @@ void main()
 	emit_quad(hex_bot_back.vertices[0], hex_bot_left.vertices[5], hex_bot_back.vertices[1], hex_bot_left.vertices[4]);
 	emit_quad(hex_bot_left.vertices[0], hex_bot_front.vertices[5], hex_bot_left.vertices[1], hex_bot_front.vertices[4]);
 
-	// Top Octagon.
+	// -- OCTAGONS -------------------------------------------------------------------------
 	emit_octagon(hex_top_front.vertices[0], hex_top_front.vertices[5], hex_top_right.vertices[0], hex_top_right.vertices[5],
 		hex_top_back.vertices[0], hex_top_back.vertices[5], hex_top_left.vertices[0], hex_top_left.vertices[5]);
 
@@ -246,7 +246,7 @@ void main()
 	emit_octagon(hex_bot_front.vertices[0], hex_bot_front.vertices[5], hex_bot_left.vertices[0], hex_bot_left.vertices[5],
 		hex_bot_back.vertices[0], hex_bot_back.vertices[5], hex_bot_right.vertices[0], hex_bot_right.vertices[5]);
 
-	// Hexagons
+	// -- HEXAGONS -------------------------------------------------------------------------
 	emit_hexagon(hex_top_front);
 	emit_hexagon(hex_top_right);
 	emit_hexagon(hex_top_back);

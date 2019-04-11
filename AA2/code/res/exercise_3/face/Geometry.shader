@@ -77,6 +77,7 @@ void main()
 {
 	vec2 center = gl_in[0].gl_Position.xy;
 
+	// -- VERTICES -------------------------------------------------------------------------
 	vec2 vertices[8];
 	vertices[0] = vec2(center.x - 2, center.y + 2);
 	vertices[1] = vec2(center.x, center.y + 2);
@@ -87,17 +88,18 @@ void main()
 	vertices[6] = vec2(center.x - 2, center.y - 2);
 	vertices[7] = vec2(center.x - 3, center.y);
 
-	// Compute midpoints.
+	// -- MID POINTS -------------------------------------------------------------------------
 	vec2 midpoints[8];
 	for (int i = 0; i < 8; i++)
 	{
 		// Randomize position.
 		vertices[i].x += random_values[i];
 
+		// Compute midpoint.
 		midpoints[i] = (center + vertices[i]) / 2;
 	}
 
-	// Lines
+	// -- LINES -------------------------------------------------------------------------
 	float slopes[8];
 	float intercepts[8];
 
@@ -117,7 +119,7 @@ void main()
 		intercepts[i] = midpoints[i].y - slopes[i] * midpoints[i].x;
 	}
 
-	// Intersections
+	// -- INTERSECTIONS -------------------------------------------------------------------------
 	// y1 = ax + c; y2 = bx + d
 	// x = (d - c) / (a - b)
 	vec2 intersections[8];
@@ -127,7 +129,7 @@ void main()
 		intersections[i].y = slopes[i] * intersections[i].x + intercepts[i];
 	}
 
-	// -- QUAD --
+	// -- QUAD -------------------------------------------------------------------------
 	vec3 direction = vec3(0.0, 0.0, -1.0);
 
 	vec3 quad_center = vec3(center, 0.0) + direction * h;
@@ -138,7 +140,7 @@ void main()
 
 	emit_quad(up_right, down_right, up_left, down_left);
 
-	// -- FACES --
+	// -- FACES -------------------------------------------------------------------------
 	vec3 triangle_up_right = emit_triangle(intersections[1], intersections[2]);
 	vec3 triangle_down_right = emit_triangle(intersections[3], intersections[4]);
 	vec3 triangle_down_left = emit_triangle(intersections[5], intersections[6]);
