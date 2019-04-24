@@ -23,6 +23,19 @@ void main()
 	vec4 lightDir = normalize(lightPos - fragPos);
 
 	float diff = max(dot(norm, lightDir), 0.0);
+	bool diffChanged = false;
+	for (int i = 0; i < 4; i++)
+	{
+		if (!diffChanged)
+		{
+			if (diff <= i / 4)
+			{
+				diff = i / 4;
+				diffChanged = true;
+			}
+		}
+	}
+
 	vec3 diffuse = diffStrength * diff * lightColor;
 	vec4 viewDir = normalize(-fragPos);
 	vec4 reflectDir = reflect(-lightDir, norm);
@@ -30,6 +43,6 @@ void main()
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), specularPower);
 	vec3 specular = specularStrength * spec * lightColor;
 	
-	vec3 result = (ambient + diffuse + specular) * objectColor;
-	out_Color = vec4(result, 1.0);
+	vec3 result = ambient + diffuse + specular;
+	out_Color = vec4(result * objectColor, 1.0);
 }

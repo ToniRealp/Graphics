@@ -556,6 +556,7 @@ namespace Object
 
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
+
 		glGenBuffers(2, vbo);
 
 		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
@@ -669,6 +670,14 @@ void GUI()
 	ImGui::Begin("Physics Parameters", &show, 0);
 	{
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+		ImGui::DragFloat("K_amb", &kAmbient, 0.01f, 0.f, 1.f);
+		ImGui::DragFloat("K_dif", &kDiffuse, 0.01f, 0.f, 1.f);
+		ImGui::DragFloat("K_spe", &kSpecular, 0.01f, 0.f, 1.f);
+		ImGui::DragFloat("Specular Power", &specularPower, 1.f, 2.f, 256.f);
+		ImGui::DragFloat3("Light Position", static_cast<float*>(&lightPosition.x), 0.1f);
+		ImGui::ColorEdit3("Light Color", static_cast<float*>(&lightColor.x));
+		ImGui::ColorEdit3("Object Color", static_cast<float*>(&objectColor.x));
 
 		switch (scene)
 		{
