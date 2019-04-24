@@ -149,6 +149,8 @@ xcopy "$(ProjectDir)libs\SDL2.dll" "$(OutDir)" /y /d</Command>
     <None Include="res\exercise_3\lines\Fragment.shader" />
     <None Include="res\exercise_3\lines\Geometry.shader" />
     <None Include="res\exercise_3\lines\Vertex.shader" />
+    <None Include="res\object\Fragment.shader" />
+    <None Include="res\object\Vertex.shader" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
