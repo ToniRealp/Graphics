@@ -526,7 +526,7 @@ public:
 
 	void Setup()
 	{
-		Load("res/coche.obj", vertices, uvs, normals);///
+		Load("res/Trump.obj", vertices, uvs, normals);///
 		glGenVertexArrays(1, &Vao);
 		glBindVertexArray(Vao);
 		glGenBuffers(2, Vbo);

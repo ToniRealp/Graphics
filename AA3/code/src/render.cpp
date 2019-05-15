@@ -458,19 +458,83 @@ namespace Shader
 float kAmbient = 0.f, kDiffuse = 0.f, kSpecular = 0.f, specularPower = 2.f;
 glm::vec3 lightPosition, lightColor, objectColor;
 
-namespace Object
+class Object
 {
 	unsigned int vao, vbo[2];
 	unsigned int program;
 
-	glm::mat4& view = RV::_modelView;
-	glm::mat4& projection = RV::_projection;
+	static const glm::mat4& view;
+	static const glm::mat4& projection;
+
 	glm::mat4 model = glm::mat4(1.f);
 
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec2> uvs;
 	std::vector<glm::vec3> normals;
 
+public:
+
+	Object() = default;
+
+	void Setup(const char * path)
+	{
+		if (!Load(path, vertices, uvs, normals))
+		{
+			std::cout << "Could not load model at path: " << path << std::endl;
+		}
+
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+
+		glGenBuffers(2, vbo);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*vertices.size(), vertices.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*normals.size(), normals.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(1);
+
+		const auto vertex_shader = Shader::ParseShader("res/object/Vertex.shader");
+		const auto fragment_shader = Shader::ParseShader("res/object/Fragment.shader");
+		program = Shader::CreateProgram(vertex_shader, fragment_shader);
+	}
+
+	void Clean()
+	{
+		glDeleteBuffers(2, vbo);
+		glDeleteVertexArrays(1, &vao);
+
+		glDeleteProgram(program);
+	}
+
+	void Render()
+	{
+		glBindVertexArray(vao);
+		glUseProgram(program);
+
+		auto viewLightPosition = RenderVars::_modelView * glm::vec4(lightPosition, 1.f);
+
+		Shader::SetMat4(program, "model", model);
+		Shader::SetMat4(program, "view", view);
+		Shader::SetMat4(program, "mvp", projection * view * model);
+
+		glUniform3f(glGetUniformLocation(program, "objectColor"), objectColor[0], objectColor[1], objectColor[2]);
+		glUniform3f(glGetUniformLocation(program, "lightColor"), lightColor[0], lightColor[1], lightColor[2]);
+		glUniform4f(glGetUniformLocation(program, "lightPos"), viewLightPosition[0], viewLightPosition[1], viewLightPosition[2], viewLightPosition[3]);
+
+		Shader::SetFloat(program, "ambientStrength", kAmbient);
+		Shader::SetFloat(program, "specularStrength", kSpecular);
+		Shader::SetFloat(program, "specularPower", specularPower);
+		Shader::SetFloat(program, "diffStrength", kDiffuse);
+
+		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+	}
+
+private:
 
 	bool Load(const char * path, std::vector<glm::vec3>& out_vertices, std::vector<glm::vec2>& out_uvs, std::vector<glm::vec3>& out_normals)
 	{
@@ -549,68 +613,18 @@ namespace Object
 
 		return true;
 	}
-
-	void Setup()
-	{
-		Load("res/coche.obj", vertices, uvs, normals);
-
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
-
-		glGenBuffers(2, vbo);
-
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*vertices.size(), vertices.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(0);
-
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*normals.size(), normals.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(1);
-
-		const auto vertex_shader = Shader::ParseShader("res/object/Vertex.shader");
-		const auto fragment_shader = Shader::ParseShader("res/object/Fragment.shader");
-		program = Shader::CreateProgram(vertex_shader, fragment_shader);
-	}
-
-	void Clean()
-	{
-		glDeleteBuffers(2, vbo);
-		glDeleteVertexArrays(1, &vao);
-
-		glDeleteProgram(program);
-	}
-
-	void Render()
-	{
-		glBindVertexArray(vao);
-		glUseProgram(program);
-
-		auto viewLightPosition = RenderVars::_modelView * glm::vec4(lightPosition, 1.f);
-
-		Shader::SetMat4(program, "model", model);
-		Shader::SetMat4(program, "view", view);
-		Shader::SetMat4(program, "mvp", projection * view * model);
-
-		glUniform3f(glGetUniformLocation(program, "objectColor"), objectColor[0], objectColor[1], objectColor[2]);
-		glUniform3f(glGetUniformLocation(program, "lightColor"), lightColor[0], lightColor[1], lightColor[2]);
-		glUniform4f(glGetUniformLocation(program, "lightPos"), viewLightPosition[0], viewLightPosition[1], viewLightPosition[2], viewLightPosition[3]);
-
-		Shader::SetFloat(program, "ambientStrength", kAmbient);
-		Shader::SetFloat(program, "specularStrength", kSpecular);
-		Shader::SetFloat(program, "specularPower", specularPower);
-		Shader::SetFloat(program, "diffStrength", kDiffuse);
-
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
-	}
 };
+
+const glm::mat4& Object::view = RV::_modelView;
+const glm::mat4& Object::projection = RV::_projection;
 
 
 enum class Scene { EXERCISE_1, EXERCISE_2, EXERCISE_3 };
 
 Scene scene{ Scene::EXERCISE_1 };
 std::string sceneName{ "TRUNCATED OCTAHEDRONS" };
+
+Object car;
 
 void GLinit(int width, int height)
 {
@@ -624,14 +638,14 @@ void GLinit(int width, int height)
 	RV::_projection = glm::perspective(RV::FOV, (float)width / (float)height, RV::zNear, RV::zFar);
 	Axis::setupAxis();
 
-	Object::Setup();
+	car.Setup("res/Gallina.obj");
 }
 
 void GLcleanup()
 {
 	Axis::cleanupAxis();
 
-	Object::Clean();
+	car.Clean();
 }
 
 void GLrender(float dt)
@@ -651,7 +665,7 @@ void GLrender(float dt)
 	switch (scene)
 	{
 	case Scene::EXERCISE_1:
-		Object::Render();
+		car.Render();
 		break;
 
 	case Scene::EXERCISE_2:
