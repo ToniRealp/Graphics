@@ -476,6 +476,7 @@ public:
 
 	Object() = default;
 
+
 	void Setup(const char * path)
 	{
 		if (!Load(path, vertices, uvs, normals))
@@ -532,6 +533,21 @@ public:
 		Shader::SetFloat(program, "diffStrength", kDiffuse);
 
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+	}
+
+	void Scale(float scaleFactor)
+	{
+		model = glm::scale(model, glm::vec3(scaleFactor));
+	}
+
+	void Translate(glm::vec3 position)
+	{
+		model = glm::translate(model, position);
+	}
+
+	void Rotate(float angle, glm::vec3 rotationAxis)
+	{
+		model = glm::rotate(model, angle, rotationAxis);
 	}
 
 private:
@@ -624,7 +640,11 @@ enum class Scene { EXERCISE_1, EXERCISE_2, EXERCISE_3 };
 Scene scene{ Scene::EXERCISE_1 };
 std::string sceneName{ "TRUNCATED OCTAHEDRONS" };
 
-Object car;
+Object chicken;
+Object trump;
+Object ferrisWheel;
+Object cabin;
+Object support;
 
 void GLinit(int width, int height)
 {
@@ -638,14 +658,18 @@ void GLinit(int width, int height)
 	RV::_projection = glm::perspective(RV::FOV, (float)width / (float)height, RV::zNear, RV::zFar);
 	Axis::setupAxis();
 
-	car.Setup("res/Gallina.obj");
+	chicken.Setup("res/Gallina.obj");
+	chicken.Setup("res/Gallina.obj");
+	chicken.Setup("res/Gallina.obj");
+	chicken.Setup("res/Gallina.obj");
+	chicken.Setup("res/Gallina.obj");
 }
 
 void GLcleanup()
 {
 	Axis::cleanupAxis();
 
-	car.Clean();
+	chicken.Clean();
 }
 
 void GLrender(float dt)
@@ -665,7 +689,7 @@ void GLrender(float dt)
 	switch (scene)
 	{
 	case Scene::EXERCISE_1:
-		car.Render();
+		chicken.Render();
 		break;
 
 	case Scene::EXERCISE_2:

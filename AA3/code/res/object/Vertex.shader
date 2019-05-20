@@ -11,7 +11,7 @@ uniform mat4 mvp;
 
 void main()
 {
-	gl_Position = mvp * model * vec4(in_Position, 1.0);
+	gl_Position = mvp * vec4(in_Position, 1.0);
 	fragPos = view * model * vec4(in_Position, 1.0);
 	vert_Normal = view * model * vec4(in_Normal, 0.0);
 }
