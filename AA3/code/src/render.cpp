@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <array>
 #include <vector>
+#include <unordered_map>
 
 
 namespace ImGui {
@@ -460,8 +461,8 @@ glm::vec3 lightPosition, lightColor, objectColor;
 
 class Object
 {
-	unsigned int vao, vbo[2];
-	unsigned int program;
+	unsigned int vao{}, vbo[2]{};
+	unsigned int program{};
 
 	static const glm::mat4& view;
 	static const glm::mat4& projection;
@@ -475,6 +476,33 @@ class Object
 public:
 
 	Object() = default;
+
+	Object(const char * path)
+	{
+		if (!Load(path, vertices, uvs, normals))
+		{
+			std::cout << "Could not load model at path: " << path << std::endl;
+		}
+
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+
+		glGenBuffers(2, vbo);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*vertices.size(), vertices.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*normals.size(), normals.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(1);
+
+		const auto vertex_shader = Shader::ParseShader("res/object/Vertex.shader");
+		const auto fragment_shader = Shader::ParseShader("res/object/Fragment.shader");
+		program = Shader::CreateProgram(vertex_shader, fragment_shader);
+	}
 
 
 	void Setup(const char * path)
@@ -535,19 +563,22 @@ public:
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 	}
 
-	void Scale(float scaleFactor)
+	Object& Scale(float scaleFactor)
 	{
-		model = glm::scale(model, glm::vec3(scaleFactor));
+		model = scale(model, glm::vec3(scaleFactor));
+		return *this;
 	}
 
-	void Translate(glm::vec3 position)
+	Object& Translate(glm::vec3 position)
 	{
-		model = glm::translate(model, position);
+		model = translate(model, position);
+		return *this;
 	}
 
-	void Rotate(float angle, glm::vec3 rotationAxis)
+	Object& Rotate(float angle, glm::vec3 rotationAxis)
 	{
-		model = glm::rotate(model, angle, rotationAxis);
+		model = rotate(model, angle, rotationAxis);
+		return *this;
 	}
 
 private:
@@ -640,11 +671,8 @@ enum class Scene { EXERCISE_1, EXERCISE_2, EXERCISE_3 };
 Scene scene{ Scene::EXERCISE_1 };
 std::string sceneName{ "TRUNCATED OCTAHEDRONS" };
 
-Object chicken;
-Object trump;
-Object ferrisWheel;
-Object cabin;
-Object support;
+
+std::unordered_map<std::string, Object> objects;
 
 void GLinit(int width, int height)
 {
@@ -658,18 +686,21 @@ void GLinit(int width, int height)
 	RV::_projection = glm::perspective(RV::FOV, (float)width / (float)height, RV::zNear, RV::zFar);
 	Axis::setupAxis();
 
-	chicken.Setup("res/Gallina.obj");
-	chicken.Setup("res/Gallina.obj");
-	chicken.Setup("res/Gallina.obj");
-	chicken.Setup("res/Gallina.obj");
-	chicken.Setup("res/Gallina.obj");
+	objects["Chicken"] = { "res/Gallina.obj" };
+	objects["Trump"] = { "res/Trump.obj" };
+	objects["Wheel"] = { "res/Rueda.obj" };
+	objects["Cabin"] = { "res/Cabina.obj" };
+	objects["Support"] = { "res/Patas.obj" };
 }
 
 void GLcleanup()
 {
 	Axis::cleanupAxis();
 
-	chicken.Clean();
+	for (auto& object : objects)
+	{
+		object.second.Clean();
+	}
 }
 
 void GLrender(float dt)
@@ -689,7 +720,11 @@ void GLrender(float dt)
 	switch (scene)
 	{
 	case Scene::EXERCISE_1:
-		chicken.Render();
+		for (auto& object : objects)
+		{
+			object.second.Render();
+		}
+
 		break;
 
 	case Scene::EXERCISE_2:
@@ -727,6 +762,21 @@ void GUI()
 			ImGui::DragFloat("Random Intensity", &Config::noiseIntensity, 0.01f, 1.0f, 10.0f);
 			break;
 		}
+
+		bool objectShow;
+
+		ImGui::Begin("Objects", &objectShow);
+		{
+			for (auto& object : objects)
+			{
+				if (ImGui::TreeNode(object.first.c_str()))
+				{
+					
+					ImGui::TreePop();
+				}
+			}
+		}
+		ImGui::End();
 
 
 		if (ImGui::Button("Change Exercise"))
