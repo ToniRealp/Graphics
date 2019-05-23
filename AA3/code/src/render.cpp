@@ -363,8 +363,7 @@ void drawCube()
 /////////////////////////////////////////////////
 namespace Config
 {
-	float randomIntensity = 0.0f;
-	float noiseIntensity = 2.0f;
+	float radius = 5.f;
 }
 
 
@@ -456,11 +455,10 @@ namespace Shader
 	}
 }
 
-float kAmbient = 0.f, kDiffuse = 0.f, kSpecular = 0.f, specularPower = 2.f;
-glm::vec3 lightPosition, lightColor, objectColor;
 
 class Object
 {
+private:
 	unsigned int vao{}, vbo[2]{};
 	unsigned int program{};
 
@@ -472,116 +470,6 @@ class Object
 	std::vector<glm::vec3> vertices;
 	std::vector<glm::vec2> uvs;
 	std::vector<glm::vec3> normals;
-
-public:
-
-	Object() = default;
-
-	Object(const char * path)
-	{
-		if (!Load(path, vertices, uvs, normals))
-		{
-			std::cout << "Could not load model at path: " << path << std::endl;
-		}
-
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
-
-		glGenBuffers(2, vbo);
-
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*vertices.size(), vertices.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(0);
-
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*normals.size(), normals.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(1);
-
-		const auto vertex_shader = Shader::ParseShader("res/object/Vertex.shader");
-		const auto fragment_shader = Shader::ParseShader("res/object/Fragment.shader");
-		program = Shader::CreateProgram(vertex_shader, fragment_shader);
-	}
-
-
-	void Setup(const char * path)
-	{
-		if (!Load(path, vertices, uvs, normals))
-		{
-			std::cout << "Could not load model at path: " << path << std::endl;
-		}
-
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
-
-		glGenBuffers(2, vbo);
-
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*vertices.size(), vertices.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(0);
-
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*normals.size(), normals.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(1);
-
-		const auto vertex_shader = Shader::ParseShader("res/object/Vertex.shader");
-		const auto fragment_shader = Shader::ParseShader("res/object/Fragment.shader");
-		program = Shader::CreateProgram(vertex_shader, fragment_shader);
-	}
-
-	void Clean()
-	{
-		glDeleteBuffers(2, vbo);
-		glDeleteVertexArrays(1, &vao);
-
-		glDeleteProgram(program);
-	}
-
-	void Render()
-	{
-		glBindVertexArray(vao);
-		glUseProgram(program);
-
-		auto viewLightPosition = RenderVars::_modelView * glm::vec4(lightPosition, 1.f);
-
-		Shader::SetMat4(program, "model", model);
-		Shader::SetMat4(program, "view", view);
-		Shader::SetMat4(program, "mvp", projection * view * model);
-
-		glUniform3f(glGetUniformLocation(program, "objectColor"), objectColor[0], objectColor[1], objectColor[2]);
-		glUniform3f(glGetUniformLocation(program, "lightColor"), lightColor[0], lightColor[1], lightColor[2]);
-		glUniform4f(glGetUniformLocation(program, "lightPos"), viewLightPosition[0], viewLightPosition[1], viewLightPosition[2], viewLightPosition[3]);
-
-		Shader::SetFloat(program, "ambientStrength", kAmbient);
-		Shader::SetFloat(program, "specularStrength", kSpecular);
-		Shader::SetFloat(program, "specularPower", specularPower);
-		Shader::SetFloat(program, "diffStrength", kDiffuse);
-
-		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
-	}
-
-	Object& Scale(float scaleFactor)
-	{
-		model = scale(model, glm::vec3(scaleFactor));
-		return *this;
-	}
-
-	Object& Translate(glm::vec3 position)
-	{
-		model = translate(model, position);
-		return *this;
-	}
-
-	Object& Rotate(float angle, glm::vec3 rotationAxis)
-	{
-		model = rotate(model, angle, rotationAxis);
-		return *this;
-	}
-
-private:
 
 	bool Load(const char * path, std::vector<glm::vec3>& out_vertices, std::vector<glm::vec2>& out_uvs, std::vector<glm::vec3>& out_normals)
 	{
@@ -660,10 +548,133 @@ private:
 
 		return true;
 	}
+
+public:
+
+	static float kAmbient, kDiffuse, kSpecular, specularPower;
+	static glm::vec3 lightPosition, lightColor;
+
+	bool active;
+
+	glm::vec3 objectColor;
+
+	Object() = default;
+
+	Object(const char * path)
+	{
+		if (!Load(path, vertices, uvs, normals))
+		{
+			std::cout << "Could not load model at path: " << path << std::endl;
+		}
+
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+
+		glGenBuffers(2, vbo);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * normals.size(), normals.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(1);
+
+		const auto vertex_shader = Shader::ParseShader("res/object/Vertex.shader");
+		const auto fragment_shader = Shader::ParseShader("res/object/Fragment.shader");
+		program = Shader::CreateProgram(vertex_shader, fragment_shader);
+	}
+
+
+	void Setup(const char * path)
+	{
+		if (!Load(path, vertices, uvs, normals))
+		{
+			std::cout << "Could not load model at path: " << path << std::endl;
+		}
+
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);
+
+		glGenBuffers(2, vbo);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*vertices.size(), vertices.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * normals.size(), normals.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(1);
+
+		const auto vertex_shader = Shader::ParseShader("res/object/Vertex.shader");
+		const auto fragment_shader = Shader::ParseShader("res/object/Fragment.shader");
+		program = Shader::CreateProgram(vertex_shader, fragment_shader);
+	}
+
+	void Clean()
+	{
+		glDeleteBuffers(2, vbo);
+		glDeleteVertexArrays(1, &vao);
+
+		glDeleteProgram(program);
+	}
+
+	void Render()
+	{
+		if (!active) return;
+
+		glBindVertexArray(vao);
+		glUseProgram(program);
+
+		auto viewLightPosition = RenderVars::_modelView * glm::vec4(lightPosition, 1.f);
+
+		Shader::SetMat4(program, "model", model);
+		Shader::SetMat4(program, "view", view);
+		Shader::SetMat4(program, "mvp", projection * view * model);
+
+		glUniform3f(glGetUniformLocation(program, "objectColor"), objectColor[0], objectColor[1], objectColor[2]);
+		glUniform3f(glGetUniformLocation(program, "lightColor"), lightColor[0], lightColor[1], lightColor[2]);
+		glUniform4f(glGetUniformLocation(program, "lightPos"), viewLightPosition[0], viewLightPosition[1], viewLightPosition[2], viewLightPosition[3]);
+
+		Shader::SetFloat(program, "ambientStrength", kAmbient);
+		Shader::SetFloat(program, "specularStrength", kSpecular);
+		Shader::SetFloat(program, "specularPower", specularPower);
+		Shader::SetFloat(program, "diffStrength", kDiffuse);
+
+		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+	}
+
+	Object& Scale(float scaleFactor)
+	{
+		model = scale(model, glm::vec3(scaleFactor));
+		return *this;
+	}
+
+	Object& Translate(glm::vec3 position)
+	{
+		model = translate(model, position);
+		return *this;
+	}
+
+	Object& Rotate(float angle, glm::vec3 rotationAxis)
+	{
+		model = rotate(model, angle, rotationAxis);
+		return *this;
+	}
 };
 
 const glm::mat4& Object::view = RV::_modelView;
 const glm::mat4& Object::projection = RV::_projection;
+glm::vec3 Object::lightColor = glm::vec3();
+glm::vec3 Object::lightPosition = glm::vec3();
+float Object::kAmbient = 0.0f;
+float Object::kDiffuse = 0.0f;
+float Object::kSpecular = 0.0f;
+float Object::specularPower = 2.0f;
 
 
 enum class Scene { EXERCISE_1, EXERCISE_2, EXERCISE_3 };
@@ -673,6 +684,7 @@ std::string sceneName{ "TRUNCATED OCTAHEDRONS" };
 
 
 std::unordered_map<std::string, Object> objects;
+
 
 void GLinit(int width, int height)
 {
@@ -687,10 +699,10 @@ void GLinit(int width, int height)
 	Axis::setupAxis();
 
 	objects["Chicken"] = { "res/Gallina.obj" };
+	objects["Support"] = { "res/Patas.obj" };
+	objects["Cabin"] = { "res/Cabina.obj" };
 	objects["Trump"] = { "res/Trump.obj" };
 	objects["Wheel"] = { "res/Rueda.obj" };
-	objects["Cabin"] = { "res/Cabina.obj" };
-	objects["Support"] = { "res/Patas.obj" };
 }
 
 void GLcleanup()
@@ -715,6 +727,22 @@ void GLrender(float dt)
 	RV::_MVP = RV::_projection * RV::_modelView;
 	glLineWidth(1.0f);
 	Axis::drawAxis();
+
+	static float accum = 0.f;
+	accum += dt;
+	if (accum > glm::two_pi<float>()) accum = 0.f;
+
+	objects["Wheel"].Rotate(0.1f * dt, { 0.f, 0.f, 1.f });
+
+	float frequency = 1 / (glm::two_pi<float>() * dt / 0.1f);
+	float currentCabin = 1;
+	float totalCabins = 1;
+
+	glm::vec3 cabinPosition;
+	cabinPosition.x = Config::radius * cos(glm::two_pi<float>() * frequency * accum + glm::two_pi<float>() * currentCabin / totalCabins);
+	cabinPosition.y = Config::radius * sin(glm::two_pi<float>() * frequency * accum + glm::two_pi<float>() * currentCabin / totalCabins);
+
+	objects["Cabin"].Translate(cabinPosition);
 
 
 	switch (scene)
@@ -743,38 +771,39 @@ void GUI()
 	ImGui::Begin("Physics Parameters", &show, 0);
 	{
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-
-		ImGui::DragFloat("K_amb", &kAmbient, 0.01f, 0.f, 1.f);
-		ImGui::DragFloat("K_dif", &kDiffuse, 0.01f, 0.f, 1.f);
-		ImGui::DragFloat("K_spe", &kSpecular, 0.01f, 0.f, 1.f);
-		ImGui::DragFloat("Specular Power", &specularPower, 1.f, 2.f, 256.f);
-		ImGui::DragFloat3("Light Position", static_cast<float*>(&lightPosition.x), 0.1f);
-		ImGui::ColorEdit3("Light Color", static_cast<float*>(&lightColor.x));
-		ImGui::ColorEdit3("Object Color", static_cast<float*>(&objectColor.x));
-
-		switch (scene)
-		{
-		case Scene::EXERCISE_1:
-			ImGui::DragFloat("Random Intensity", &Config::randomIntensity, 0.01f, 0.0f);
-			break;
-
-		case Scene::EXERCISE_3:
-			ImGui::DragFloat("Random Intensity", &Config::noiseIntensity, 0.01f, 1.0f, 10.0f);
-			break;
-		}
+		ImGui::DragFloat("Radius", &Config::radius, 0.1f);
 
 		bool objectShow;
 
 		ImGui::Begin("Objects", &objectShow);
 		{
-			for (auto& object : objects)
+			for (auto& object_pair : objects)
 			{
-				if (ImGui::TreeNode(object.first.c_str()))
-				{
-					
+				std::string label = object_pair.first;
+				Object& object = object_pair.second;
+				
+				if (ImGui::TreeNode(label.c_str()))
+				{	
+					ImGui::Checkbox("Active", &object.active);
+					ImGui::ColorEdit3("Object Color", static_cast<float*>(&object.objectColor.x));
+
 					ImGui::TreePop();
 				}
 			}
+		}
+		ImGui::End();
+
+		bool lightShow;
+
+		ImGui::Begin("Light Parameters");
+		{
+			ImGui::DragFloat3("Light Position", static_cast<float*>(&Object::lightPosition.x), 0.1f);
+			ImGui::ColorEdit3("Light Color", static_cast<float*>(&Object::lightColor.x));
+			ImGui::DragFloat("K_amb", &Object::kAmbient, 0.01f, 0.f, 1.f);
+			ImGui::DragFloat("K_dif", &Object::kDiffuse, 0.01f, 0.f, 1.f);
+			ImGui::DragFloat("K_spe", &Object::kSpecular, 0.01f, 0.f, 1.f);
+			ImGui::DragFloat("Specular Power", &Object::specularPower, 1.f, 2.f, 256.f);
+
 		}
 		ImGui::End();
 
