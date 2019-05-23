@@ -363,7 +363,7 @@ void drawCube()
 /////////////////////////////////////////////////
 namespace Config
 {
-	float radius = 5.f;
+	float radius = 28.5f;
 }
 
 
@@ -555,12 +555,13 @@ public:
 	static glm::vec3 lightPosition, lightColor;
 
 	bool active;
+	std::string name;
 
 	glm::vec3 objectColor;
 
 	Object() = default;
 
-	Object(const char * path)
+	Object(const char * path, std::string name) : name(name)
 	{
 		if (!Load(path, vertices, uvs, normals))
 		{
@@ -656,7 +657,12 @@ public:
 
 	Object& Translate(glm::vec3 position)
 	{
-		model = translate(model, position);
+		return Translate(position, model);
+	}
+
+	Object& Translate(glm::vec3 position, glm::mat4 matrix)
+	{
+		model = translate(matrix, position);
 		return *this;
 	}
 
@@ -680,10 +686,80 @@ float Object::specularPower = 2.0f;
 enum class Scene { EXERCISE_1, EXERCISE_2, EXERCISE_3 };
 
 Scene scene{ Scene::EXERCISE_1 };
-std::string sceneName{ "TRUNCATED OCTAHEDRONS" };
+std::string sceneName{ "Exercise 1" };
+
+Object chicken, support, trump, wheel;
+std::vector<Object> cabins;
+
+std::vector<Object*> objects;
+
+namespace Objects
+{
+	void Setup()
+	{
+		chicken = { "res/Gallina.obj", "Chicken" };
+		support = { "res/Patas.obj", "Support" };
+		trump = { "res/Trump.obj", "Trump"};
+		wheel = { "res/Rueda.obj", "Wheel" };
+		cabins.resize(20, { "res/Cabina.obj", "Cabin" });
 
 
-std::unordered_map<std::string, Object> objects;
+		objects.push_back(&chicken);
+		objects.push_back(&support);
+		objects.push_back(&trump);
+		objects.push_back(&wheel);
+
+		for (auto& cabin : cabins)
+		{
+			objects.push_back(&cabin);
+		}
+	}
+	
+	void Render()
+	{
+		for (auto& object : objects)
+		{
+			object->Render();
+		}
+	}
+
+	void Clean()
+	{
+		for (auto& object : objects)
+		{
+			object->Clean();
+		}
+
+		for (Object* object : objects)
+		{
+			delete object;
+		}
+
+		objects.clear();
+	}
+}
+
+namespace Exercise1
+{
+	void Run(float dt)
+	{
+		static float accum = 0.f;
+		accum += dt;
+
+		wheel.Rotate(0.1f * dt, { 0.f, 0.f, 1.f });
+
+		float frequency = 1 / (glm::two_pi<float>() / 0.1f);
+		for (int i = 0; i < cabins.size(); ++i)
+		{
+			float alpha = glm::two_pi<float>() * frequency * accum + glm::two_pi<float>()  * i / cabins.size();
+			glm::vec3 cabinPosition = { Config::radius * cos(alpha), Config::radius * sin(alpha), 0 };
+
+			cabins[i].Translate(cabinPosition, glm::mat4(1.0f));
+		}
+
+		Objects::Render();
+	}
+}
 
 
 void GLinit(int width, int height)
@@ -698,21 +774,14 @@ void GLinit(int width, int height)
 	RV::_projection = glm::perspective(RV::FOV, (float)width / (float)height, RV::zNear, RV::zFar);
 	Axis::setupAxis();
 
-	objects["Chicken"] = { "res/Gallina.obj" };
-	objects["Support"] = { "res/Patas.obj" };
-	objects["Cabin"] = { "res/Cabina.obj" };
-	objects["Trump"] = { "res/Trump.obj" };
-	objects["Wheel"] = { "res/Rueda.obj" };
+	Objects::Setup();
 }
 
 void GLcleanup()
 {
 	Axis::cleanupAxis();
 
-	for (auto& object : objects)
-	{
-		object.second.Clean();
-	}
+	Objects::Clean();
 }
 
 void GLrender(float dt)
@@ -728,31 +797,11 @@ void GLrender(float dt)
 	glLineWidth(1.0f);
 	Axis::drawAxis();
 
-	static float accum = 0.f;
-	accum += dt;
-	if (accum > glm::two_pi<float>()) accum = 0.f;
-
-	objects["Wheel"].Rotate(0.1f * dt, { 0.f, 0.f, 1.f });
-
-	float frequency = 1 / (glm::two_pi<float>() * dt / 0.1f);
-	float currentCabin = 1;
-	float totalCabins = 1;
-
-	glm::vec3 cabinPosition;
-	cabinPosition.x = Config::radius * cos(glm::two_pi<float>() * frequency * accum + glm::two_pi<float>() * currentCabin / totalCabins);
-	cabinPosition.y = Config::radius * sin(glm::two_pi<float>() * frequency * accum + glm::two_pi<float>() * currentCabin / totalCabins);
-
-	objects["Cabin"].Translate(cabinPosition);
-
 
 	switch (scene)
 	{
 	case Scene::EXERCISE_1:
-		for (auto& object : objects)
-		{
-			object.second.Render();
-		}
-
+		Exercise1::Run(dt);
 		break;
 
 	case Scene::EXERCISE_2:
@@ -777,15 +826,19 @@ void GUI()
 
 		ImGui::Begin("Objects", &objectShow);
 		{
-			for (auto& object_pair : objects)
+			for (auto& object : objects)
 			{
-				std::string label = object_pair.first;
-				Object& object = object_pair.second;
-				
-				if (ImGui::TreeNode(label.c_str()))
+				if (ImGui::TreeNode(object->name.c_str()))
 				{	
-					ImGui::Checkbox("Active", &object.active);
-					ImGui::ColorEdit3("Object Color", static_cast<float*>(&object.objectColor.x));
+					ImGui::Checkbox("Active", &object->active);
+
+					glm::vec3 transform;
+					if (ImGui::DragFloat3("Transform", &transform.x, 0.1))
+					{
+						object->Translate(transform, glm::mat4(1.0f));
+					}
+
+					ImGui::ColorEdit3("Object Color", static_cast<float*>(&object->objectColor.x));
 
 					ImGui::TreePop();
 				}
