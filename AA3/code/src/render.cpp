@@ -30,7 +30,7 @@ void drawAxis();
 
 namespace RenderVars {
 	const float FOV = glm::radians(65.f);
-	const float zNear = 1.f;
+	const float zNear = 0.f;
 	const float zFar = 50.f;
 
 	glm::mat4 _projection;
@@ -45,7 +45,10 @@ namespace RenderVars {
 		bool waspressed = false;
 	} prevMouse;
 
-	float panv[3] = { 0.f, -5.f, -15.f };
+	glm::vec3 cameraPosition;
+	glm::vec3 cameraRotation;
+
+	float panv[3] = { 0.f, 0.f, 0.f };
 	float rota[2] = { 0.f, 0.f };
 }
 namespace RV = RenderVars;
@@ -130,7 +133,7 @@ void linkProgram(GLuint program) {
 	}
 }
 
-////////////////////////////////////////////////// AXIS
+
 namespace Axis {
 GLuint AxisVao;
 GLuint AxisVbo[3];
@@ -227,7 +230,6 @@ void drawAxis() {
 }
 }
 
-////////////////////////////////////////////////// CUBE
 namespace Cube {
 GLuint cubeVao;
 GLuint cubeVbo[3];
@@ -360,12 +362,10 @@ void drawCube()
 }
 }
 
-/////////////////////////////////////////////////
 namespace Config
 {
 	float radius = 28.5f;
 }
-
 
 namespace Shader
 {
@@ -454,7 +454,6 @@ namespace Shader
 		glUniform1fv(glGetUniformLocation(program, name.c_str()), count, values);
 	}
 }
-
 
 class Object
 {
@@ -657,7 +656,8 @@ public:
 
 	Object& Translate(glm::vec3 position)
 	{
-		return Translate(position, model);
+		Translate(position, model);
+		return *this;
 	}
 
 	Object& Translate(glm::vec3 position, glm::mat4 matrix)
@@ -671,13 +671,18 @@ public:
 		model = rotate(model, angle, rotationAxis);
 		return *this;
 	}
+
+	glm::vec3 GetPosition()
+	{
+		return glm::vec3(model[3]);
+	}
 };
 
 const glm::mat4& Object::view = RV::_modelView;
 const glm::mat4& Object::projection = RV::_projection;
 glm::vec3 Object::lightColor = glm::vec3();
 glm::vec3 Object::lightPosition = glm::vec3();
-float Object::kAmbient = 0.0f;
+float Object::kAmbient = 1.0f;
 float Object::kDiffuse = 0.0f;
 float Object::kSpecular = 0.0f;
 float Object::specularPower = 2.0f;
@@ -688,18 +693,25 @@ enum class Scene { EXERCISE_1, EXERCISE_2, EXERCISE_3 };
 Scene scene{ Scene::EXERCISE_1 };
 std::string sceneName{ "Exercise 1" };
 
-Object chicken, support, trump, wheel;
-std::vector<Object> cabins;
 
-std::vector<Object*> objects;
-
-namespace Objects
+namespace Exercise1
 {
-	void Setup()
+
+	Object chicken, support, trump, wheel;
+	std::vector<Object> cabins;
+
+	std::vector<Object*> objects;
+
+	void Init()
 	{
+		RV::rota[0] = 0.6;
+		RV::rota[1] = 0.150;
+
+		RV::cameraPosition = { 30, -10, -33 };
+
 		chicken = { "res/Gallina.obj", "Chicken" };
 		support = { "res/Patas.obj", "Support" };
-		trump = { "res/Trump.obj", "Trump"};
+		trump = { "res/Trump.obj", "Trump" };
 		wheel = { "res/Rueda.obj", "Wheel" };
 		cabins.resize(20, { "res/Cabina.obj", "Cabin" });
 
@@ -713,10 +725,66 @@ namespace Objects
 		{
 			objects.push_back(&cabin);
 		}
+
 	}
-	
-	void Render()
+
+	void Run(float dt)
 	{
+		static float accum, counter = 0.f;
+		accum += dt;
+		counter += dt;
+
+		wheel.Rotate(0.1f * dt, { 0.f, 0.f, 1.f });
+		
+		float frequency = 1 / (glm::two_pi<float>() / 0.1f);
+		for (int i = 0; i < cabins.size(); ++i)
+		{
+			float alpha = glm::two_pi<float>() * frequency * accum + glm::two_pi<float>()  * i / cabins.size();
+			glm::vec3 cabinPosition = { Config::radius * cos(alpha), Config::radius * sin(alpha), 0 };
+
+			cabins[i].Translate(cabinPosition, glm::mat4(1.0f));
+		}
+		
+		float alpha = glm::two_pi<float>() * frequency * accum;
+		glm::vec3 position = { Config::radius * cos(alpha), Config::radius * sin(alpha), 0 };
+		
+		chicken.Translate(position, glm::mat4(1.0f)).Translate({1.f,-4,0}).Rotate(-1.57f, { 0.f,1.f,0.f });
+		trump.Translate(position, glm::mat4(1.0f)).Translate({ -1.f,-4,0 }).Rotate(1.57f, { 0.f,1.f,0.f });
+
+		static bool counterShot = true;
+
+		if(accum>2.f)
+		{
+			if(counter<2.f)
+			{
+				if(counterShot)
+				{
+					RV::cameraPosition.x = -chicken.GetPosition().x + 0.40;
+					RV::cameraPosition.y = -chicken.GetPosition().y - 2.7;
+					RV::cameraPosition.z = -0.6;
+				}else
+				{
+					RV::cameraPosition.x = -trump.GetPosition().x - 0.420;
+					RV::cameraPosition.y = -trump.GetPosition().y - 2.160;
+					RV::cameraPosition.z = -0.650;
+				}
+				
+			}else 
+			{
+				counterShot = !counterShot;
+				if(counterShot)
+				{
+					RV::rota[0] = -1.1f;
+					RV::rota[1] = 0.420;
+				}else
+				{
+					RV::rota[0] = 1.145;
+					RV::rota[1] = 0.315;
+				}
+				counter = 0.f;
+			}
+		}
+		
 		for (auto& object : objects)
 		{
 			object->Render();
@@ -739,28 +807,6 @@ namespace Objects
 	}
 }
 
-namespace Exercise1
-{
-	void Run(float dt)
-	{
-		static float accum = 0.f;
-		accum += dt;
-
-		wheel.Rotate(0.1f * dt, { 0.f, 0.f, 1.f });
-
-		float frequency = 1 / (glm::two_pi<float>() / 0.1f);
-		for (int i = 0; i < cabins.size(); ++i)
-		{
-			float alpha = glm::two_pi<float>() * frequency * accum + glm::two_pi<float>()  * i / cabins.size();
-			glm::vec3 cabinPosition = { Config::radius * cos(alpha), Config::radius * sin(alpha), 0 };
-
-			cabins[i].Translate(cabinPosition, glm::mat4(1.0f));
-		}
-
-		Objects::Render();
-	}
-}
-
 
 void GLinit(int width, int height)
 {
@@ -774,14 +820,7 @@ void GLinit(int width, int height)
 	RV::_projection = glm::perspective(RV::FOV, (float)width / (float)height, RV::zNear, RV::zFar);
 	Axis::setupAxis();
 
-	Objects::Setup();
-}
-
-void GLcleanup()
-{
-	Axis::cleanupAxis();
-
-	Objects::Clean();
+	Exercise1::Init();
 }
 
 void GLrender(float dt)
@@ -789,9 +828,10 @@ void GLrender(float dt)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	RV::_modelView = glm::mat4(1.f);
-	RV::_modelView = glm::translate(RV::_modelView, glm::vec3(RV::panv[0], RV::panv[1], RV::panv[2]));
 	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
 	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
+	RV::_modelView = glm::translate(RV::_modelView, { RV::panv[0],RV::panv[1],RV::panv[2] });
+	RV::_modelView = glm::translate(RV::_modelView, RenderVars::cameraPosition);
 
 	RV::_MVP = RV::_projection * RV::_modelView;
 	glLineWidth(1.0f);
@@ -814,6 +854,12 @@ void GLrender(float dt)
 	ImGui::Render();
 }
 
+void GLcleanup()
+{
+	Axis::cleanupAxis();
+
+}
+
 void GUI()
 {
 	bool show = true;
@@ -821,12 +867,14 @@ void GUI()
 	{
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::DragFloat("Radius", &Config::radius, 0.1f);
+		ImGui::DragFloat3("Camera position", &RV::panv[0],1);
+		ImGui::DragFloat3("Camera rotation", &RV::rota[0],1);
 
 		bool objectShow;
 
 		ImGui::Begin("Objects", &objectShow);
 		{
-			for (auto& object : objects)
+			for (auto& object : Exercise1::objects)
 			{
 				if (ImGui::TreeNode(object->name.c_str()))
 				{	
