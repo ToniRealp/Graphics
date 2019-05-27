@@ -46,7 +46,7 @@ namespace RenderVars {
 	} prevMouse;
 
 	glm::vec3 cameraPosition;
-	glm::vec3 cameraRotation;
+	glm::vec2 cameraRotation;
 
 	float panv[3] = { 0.f, 0.f, 0.f };
 	float rota[2] = { 0.f, 0.f };
@@ -776,18 +776,12 @@ namespace Exercise1
 {
 	void Init()
 	{
-		RV::rota[0] = 0.6;
-		RV::rota[1] = 0.150;
+		RV::cameraRotation = { 0.6, 0.150 };
 		RV::cameraPosition = { 30, -10, -33 };
 	}
 
 	void Run(float dt)
 	{
-		//Camera control
-		RV::_modelView = glm::translate(RV::_modelView, RenderVars::cameraPosition);
-
-
-		//Exercise logic
 		static float accum, counter = 0.f;
 		accum += dt;
 		counter += dt;
@@ -830,13 +824,11 @@ namespace Exercise1
 
 				if(counterShot)
 				{
-					RV::rota[0] = -1.1f;
-					RV::rota[1] = 0.420;
+					RV::cameraRotation = { -1.1f, 0.420 };
 				}
 				else
 				{
-					RV::rota[0] = 1.145;
-					RV::rota[1] = 0.315;
+					RV::cameraRotation = { 1.145, 0.315 };
 				}
 
 				counter = 0.f;
@@ -849,26 +841,51 @@ namespace Exercise1
 
 namespace Exercise2
 {
-	std::unordered_map<std::string, Object> objects;
-
 	void Init()
 	{
-		
-		RV::cameraPosition = { 0, 0, -15 };
 		RV::panv[0] = 0.f;
 		RV::panv[1] = 0.f;
+		RV::panv[2] = -10.f;
 
-		objects["chicken"] = { "res/Gallina.obj" };
-		objects["trump"] = { "res/Trump.obj" };
-
+		Objects::Translate("trump", { 0.f, 0.f, 0.f }, glm::mat4(1.f));
+		Objects::Translate("chicken", { 0.f, 0.f, 0.f }, glm::mat4(1.f));
 	}
 
 	void Run(float dt)
 	{
-		for (auto& object : objects)
-		{
-			object.second.Render();
-		}
+		Objects::Render({ "trump", "chicken" });
+	}
+}
+
+namespace Camera
+{
+	// First moves the camera and then rotates it.
+	void Setup(glm::vec3 position, glm::vec2 rotation)
+	{
+		RV::_modelView = glm::mat4(1.f);
+		RV::_modelView = translate(RV::_modelView, position);
+		RV::_modelView = rotate(RV::_modelView, rotation.y, glm::vec3(1.f, 0.f, 0.f));
+		RV::_modelView = rotate(RV::_modelView, rotation.x, glm::vec3(0.f, 1.f, 0.f));
+
+		RV::_MVP = RV::_projection * RV::_modelView;
+
+		glLineWidth(1.0f);
+		Axis::drawAxis();
+	}
+
+
+	// First rotates the camera and the adjusts its position.
+	void Setup(glm::vec2 rotation, glm::vec3 position)
+	{
+		RV::_modelView = glm::mat4(1.f);
+		RV::_modelView = rotate(RV::_modelView, rotation.y, glm::vec3(1.f, 0.f, 0.f));
+		RV::_modelView = rotate(RV::_modelView, rotation.x, glm::vec3(0.f, 1.f, 0.f));
+		RV::_modelView = translate(RV::_modelView, position);
+
+		RV::_MVP = RV::_projection * RV::_modelView;
+
+		glLineWidth(1.0f);
+		Axis::drawAxis();
 	}
 }
 
@@ -893,24 +910,15 @@ void GLrender(float dt)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	RV::_modelView = glm::mat4(1.f);
-	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
-	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
-	RV::_modelView = glm::translate(RV::_modelView, { RV::panv[0],RV::panv[1],RV::panv[2] });
-	
-
-	RV::_MVP = RV::_projection * RV::_modelView;
-	glLineWidth(1.0f);
-	Axis::drawAxis();
-
-
 	switch (scene)
 	{
 	case Scene::EXERCISE_1:
+		Camera::Setup(RV::cameraRotation, RV::cameraPosition);
 		Exercise1::Run(dt);
 		break;
 
 	case Scene::EXERCISE_2:
+		Camera::Setup({ RV::panv[0], RV::panv[1], RV::panv[2] }, { RV::rota[0], RV::rota[1] });
 		Exercise2::Run(dt);
 		break;
 
