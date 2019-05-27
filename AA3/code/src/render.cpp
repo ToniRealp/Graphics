@@ -554,13 +554,11 @@ public:
 	static glm::vec3 lightPosition, lightColor;
 
 	bool active;
-	std::string name;
-
 	glm::vec3 objectColor;
 
 	Object() = default;
 
-	Object(const char * path, std::string name) : name(name)
+	Object(const char * path)
 	{
 		if (!Load(path, vertices, uvs, normals))
 		{
@@ -688,53 +686,40 @@ float Object::kSpecular = 0.0f;
 float Object::specularPower = 2.0f;
 
 
-enum class Scene { EXERCISE_1, EXERCISE_2, EXERCISE_3 };
-
-Scene scene{ Scene::EXERCISE_1 };
-std::string sceneName{ "Exercise 1" };
-
+enum class Scene { EXERCISE_1, EXERCISE_2, EXERCISE_3 } scene;
+std::string sceneName;
 
 namespace Exercise1
 {
-
-	Object chicken, support, trump, wheel;
 	std::vector<Object> cabins;
-
-	std::vector<Object*> objects;
-
+	std::unordered_map<std::string, Object> objects;
+	
 	void Init()
 	{
 		RV::rota[0] = 0.6;
 		RV::rota[1] = 0.150;
-
 		RV::cameraPosition = { 30, -10, -33 };
 
-		chicken = { "res/Gallina.obj", "Chicken" };
-		support = { "res/Patas.obj", "Support" };
-		trump = { "res/Trump.obj", "Trump" };
-		wheel = { "res/Rueda.obj", "Wheel" };
-		cabins.resize(20, { "res/Cabina.obj", "Cabin" });
+		objects["chicken"] = { "res/Gallina.obj" };
+		objects["support"] = { "res/Patas.obj"};
+		objects["trump"] = { "res/Trump.obj"};
+		objects["wheel"] = { "res/Rueda.obj"};
 
-
-		objects.push_back(&chicken);
-		objects.push_back(&support);
-		objects.push_back(&trump);
-		objects.push_back(&wheel);
-
-		for (auto& cabin : cabins)
-		{
-			objects.push_back(&cabin);
-		}
-
+		cabins.resize(20, { "res/Cabina.obj"});
 	}
 
 	void Run(float dt)
 	{
+		//Camera control
+		RV::_modelView = glm::translate(RV::_modelView, RenderVars::cameraPosition);
+
+
+		//Exercise logic
 		static float accum, counter = 0.f;
 		accum += dt;
 		counter += dt;
 
-		wheel.Rotate(0.1f * dt, { 0.f, 0.f, 1.f });
+		objects["wheel"].Rotate(0.1f * dt, { 0.f, 0.f, 1.f });
 		
 		float frequency = 1 / (glm::two_pi<float>() / 0.1f);
 		for (int i = 0; i < cabins.size(); ++i)
@@ -748,8 +733,8 @@ namespace Exercise1
 		float alpha = glm::two_pi<float>() * frequency * accum;
 		glm::vec3 position = { Config::radius * cos(alpha), Config::radius * sin(alpha), 0 };
 		
-		chicken.Translate(position, glm::mat4(1.0f)).Translate({1.f,-4,0}).Rotate(-1.57f, { 0.f,1.f,0.f });
-		trump.Translate(position, glm::mat4(1.0f)).Translate({ -1.f,-4,0 }).Rotate(1.57f, { 0.f,1.f,0.f });
+		objects["chicken"].Translate(position, glm::mat4(1.0f)).Translate({1.f,-4,0}).Rotate(-1.57f, { 0.f,1.f,0.f });
+		objects["trump"].Translate(position, glm::mat4(1.0f)).Translate({ -1.f,-4,0 }).Rotate(1.57f, { 0.f,1.f,0.f });
 
 		static bool counterShot = true;
 
@@ -759,13 +744,13 @@ namespace Exercise1
 			{
 				if(counterShot)
 				{
-					RV::cameraPosition.x = -chicken.GetPosition().x + 0.40;
-					RV::cameraPosition.y = -chicken.GetPosition().y - 2.7;
+					RV::cameraPosition.x = -objects["chicken"].GetPosition().x + 0.40;
+					RV::cameraPosition.y = -objects["chicken"].GetPosition().y - 2.7;
 					RV::cameraPosition.z = -0.6;
 				}else
 				{
-					RV::cameraPosition.x = -trump.GetPosition().x - 0.420;
-					RV::cameraPosition.y = -trump.GetPosition().y - 2.160;
+					RV::cameraPosition.x = -objects["trump"].GetPosition().x - 0.420;
+					RV::cameraPosition.y = -objects["trump"].GetPosition().y - 2.160;
 					RV::cameraPosition.z = -0.650;
 				}
 				
@@ -787,7 +772,11 @@ namespace Exercise1
 		
 		for (auto& object : objects)
 		{
-			object->Render();
+			object.second.Render();
+		}
+		for (auto& cabin : cabins)
+		{
+			cabin.Render();
 		}
 	}
 
@@ -795,18 +784,42 @@ namespace Exercise1
 	{
 		for (auto& object : objects)
 		{
-			object->Clean();
+			object.second.Clean();
 		}
 
-		for (Object* object : objects)
+		for (auto& cabin : cabins)
 		{
-			delete object;
+			cabin.Clean();
 		}
 
 		objects.clear();
 	}
 }
 
+namespace Exercise2
+{
+	std::unordered_map<std::string, Object> objects;
+
+	void Init()
+	{
+		
+		RV::cameraPosition = { 0, 0, -15 };
+		RV::panv[0] = 0.f;
+		RV::panv[1] = 0.f;
+
+		objects["chicken"] = { "res/Gallina.obj" };
+		objects["trump"] = { "res/Trump.obj" };
+
+	}
+
+	void Run(float dt)
+	{
+		for (auto& object : objects)
+		{
+			object.second.Render();
+		}
+	}
+}
 
 void GLinit(int width, int height)
 {
@@ -831,7 +844,7 @@ void GLrender(float dt)
 	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[1], glm::vec3(1.f, 0.f, 0.f));
 	RV::_modelView = glm::rotate(RV::_modelView, RV::rota[0], glm::vec3(0.f, 1.f, 0.f));
 	RV::_modelView = glm::translate(RV::_modelView, { RV::panv[0],RV::panv[1],RV::panv[2] });
-	RV::_modelView = glm::translate(RV::_modelView, RenderVars::cameraPosition);
+	
 
 	RV::_MVP = RV::_projection * RV::_modelView;
 	glLineWidth(1.0f);
@@ -845,6 +858,7 @@ void GLrender(float dt)
 		break;
 
 	case Scene::EXERCISE_2:
+		Exercise2::Run(dt);
 		break;
 
 	case Scene::EXERCISE_3:
@@ -867,47 +881,8 @@ void GUI()
 	{
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::DragFloat("Radius", &Config::radius, 0.1f);
-		ImGui::DragFloat3("Camera position", &RV::panv[0],1);
-		ImGui::DragFloat3("Camera rotation", &RV::rota[0],1);
-
-		bool objectShow;
-
-		ImGui::Begin("Objects", &objectShow);
-		{
-			for (auto& object : Exercise1::objects)
-			{
-				if (ImGui::TreeNode(object->name.c_str()))
-				{	
-					ImGui::Checkbox("Active", &object->active);
-
-					glm::vec3 transform;
-					if (ImGui::DragFloat3("Transform", &transform.x, 0.1))
-					{
-						object->Translate(transform, glm::mat4(1.0f));
-					}
-
-					ImGui::ColorEdit3("Object Color", static_cast<float*>(&object->objectColor.x));
-
-					ImGui::TreePop();
-				}
-			}
-		}
-		ImGui::End();
-
-		bool lightShow;
-
-		ImGui::Begin("Light Parameters");
-		{
-			ImGui::DragFloat3("Light Position", static_cast<float*>(&Object::lightPosition.x), 0.1f);
-			ImGui::ColorEdit3("Light Color", static_cast<float*>(&Object::lightColor.x));
-			ImGui::DragFloat("K_amb", &Object::kAmbient, 0.01f, 0.f, 1.f);
-			ImGui::DragFloat("K_dif", &Object::kDiffuse, 0.01f, 0.f, 1.f);
-			ImGui::DragFloat("K_spe", &Object::kSpecular, 0.01f, 0.f, 1.f);
-			ImGui::DragFloat("Specular Power", &Object::specularPower, 1.f, 2.f, 256.f);
-
-		}
-		ImGui::End();
-
+		ImGui::DragFloat3("Camera position", &RV::panv[0], 1);
+		ImGui::DragFloat3("Camera rotation", &RV::rota[0], 1);
 
 		if (ImGui::Button("Change Exercise"))
 		{
@@ -916,21 +891,62 @@ void GUI()
 			switch (scene)
 			{
 			case Scene::EXERCISE_1:
-				sceneName = "TRUNCATED OCTAHEDRONS";
+				sceneName = "Scene composition";
 				break;
 
 			case Scene::EXERCISE_2:
-				sceneName = "HONEYCOMBS";
+				sceneName = "Lightning and shaders";
+				Exercise2::Init();
 				break;
 
 			case Scene::EXERCISE_3:
-				sceneName = "VORONOID";
+				sceneName = "Advanced rendering";
 				break;
 			}
 		}
 
 		ImGui::Text(sceneName.c_str());
 	}
-
 	ImGui::End();
+		
+	bool objectShow;
+
+	ImGui::Begin("Objects", &objectShow);
+	{
+		for (auto& object : Exercise1::objects)
+		{
+			if (ImGui::TreeNode(object.first.c_str()))
+			{	
+				ImGui::Checkbox("Active", &object.second.active);
+
+				glm::vec3 transform = object.second.GetPosition();
+				ImGui::DragFloat3("Transform", &transform.x, 0.1);
+				
+
+				ImGui::ColorEdit3("Object Color", &object.second.objectColor.x);
+
+				ImGui::TreePop();
+			}
+		}
+	}
+	ImGui::End();
+
+	bool lightShow;
+
+	ImGui::Begin("Light Parameters");
+	{
+		ImGui::DragFloat3("Light Position", static_cast<float*>(&Object::lightPosition.x), 0.1f);
+		ImGui::ColorEdit3("Light Color", static_cast<float*>(&Object::lightColor.x));
+		ImGui::DragFloat("K_amb", &Object::kAmbient, 0.01f, 0.f, 1.f);
+		ImGui::DragFloat("K_dif", &Object::kDiffuse, 0.01f, 0.f, 1.f);
+		ImGui::DragFloat("K_spe", &Object::kSpecular, 0.01f, 0.f, 1.f);
+		ImGui::DragFloat("Specular Power", &Object::specularPower, 1.f, 2.f, 256.f);
+	}
+	ImGui::End();
+
+
+	
+	
+
+	
 }
