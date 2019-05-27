@@ -770,10 +770,47 @@ namespace Objects
 			cabins[i].Translate(cabinPosition, glm::mat4(1.0f));
 		}
 	}
+
+	void SpinPassengers(float frequency, float accum)
+	{
+		float alpha = glm::two_pi<float>() * frequency * accum;
+		glm::vec3 position = { Config::radius * cos(alpha), Config::radius * sin(alpha), 0 };
+
+		objects["chicken"].Translate(position, glm::mat4(1.0f)).Translate({ 1.f, -4,0 }).Rotate(-1.57f, { 0.f, 1.f, 0.f });
+		objects["trump"].Translate(position, glm::mat4(1.0f)).Translate({ -1.f, -4,0 }).Rotate(1.57f, { 0.f, 1.f, 0.f });
+	}
 }
 
 namespace Exercise1
 {
+	float accum, counter = 0.f;
+	bool counterShot = true;
+	float frequency = 1 / (glm::two_pi<float>() / 0.1f);
+	
+	void CounterShot()
+	{
+		if (accum < 2.f) return;
+
+		if (counter < 2.f)
+		{
+			if (counterShot)
+			{
+				RV::cameraPosition = -Objects::GetPosition("chicken") + glm::vec3(0.40, -2.7, -0.6);
+				RV::cameraRotation = { -1.1f, 0.420 };
+			}
+			else
+			{
+				RV::cameraPosition = -Objects::GetPosition("trump") + glm::vec3(-0.420, -2.160, -0.650);
+				RV::cameraRotation = { 1.145, 0.315 };
+			}
+		}
+		else
+		{
+			counterShot = !counterShot;
+			counter = 0.f;
+		}
+	}
+
 	void Init()
 	{
 		RV::cameraRotation = { 0.6, 0.150 };
@@ -782,61 +819,18 @@ namespace Exercise1
 
 	void Run(float dt)
 	{
-		static float accum, counter = 0.f;
 		accum += dt;
 		counter += dt;
 
 		Objects::Rotate("wheel", 0.1f * dt, { 0.f, 0.f, 1.f });
 
-		float frequency = 1 / (glm::two_pi<float>() / 0.1f);
-
 		Objects::SpinCabins(frequency, accum);
+		Objects::SpinPassengers(frequency, accum);
 		
-		float alpha = glm::two_pi<float>() * frequency * accum;
-		glm::vec3 position = { Config::radius * cos(alpha), Config::radius * sin(alpha), 0 };
-		
-		Objects::Translate("chicken", position, glm::mat4(1.0f));
-		Objects::Translate("chicken", { 1.f, -4,0 });
-		Objects::Rotate("chicken", -1.57f, { 0.f, 1.f, 0.f });
+		CounterShot();
 
-		Objects::Translate("trump", position, glm::mat4(1.0f));
-		Objects::Translate("trump", { -1.f, -4,0 });
-		Objects::Rotate("trump", 1.57f, { 0.f, 1.f, 0.f });
-
-		static bool counterShot = true;
-
-		if (accum > 2.f)
-		{
-			if(counter < 2.f)
-			{
-				if (counterShot)
-				{
-					RV::cameraPosition = -Objects::GetPosition("chicken") + glm::vec3(0.40, -2.7, -0.6);
-				}
-				else
-				{
-					RV::cameraPosition = -Objects::GetPosition("trump") + glm::vec3(-0.420, -2.160, -0.650);
-				}	
-			}
-			else 
-			{
-				counterShot = !counterShot;
-
-				if(counterShot)
-				{
-					RV::cameraRotation = { -1.1f, 0.420 };
-				}
-				else
-				{
-					RV::cameraRotation = { 1.145, 0.315 };
-				}
-
-				counter = 0.f;
-			}
-		}
-		
 		Objects::Render();
-	}
+	}	
 }
 
 namespace Exercise2
@@ -1002,10 +996,4 @@ void GUI()
 		ImGui::DragFloat("Specular Power", &Object::specularPower, 1.f, 2.f, 256.f);
 	}
 	ImGui::End();
-
-
-	
-	
-
-	
 }
