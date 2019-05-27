@@ -17,6 +17,7 @@
 #include <array>
 #include <vector>
 #include <unordered_map>
+#include <functional>
 
 
 namespace ImGui {
