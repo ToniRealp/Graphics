@@ -689,94 +689,39 @@ float Object::specularPower = 2.0f;
 enum class Scene { EXERCISE_1, EXERCISE_2, EXERCISE_3 } scene;
 std::string sceneName;
 
-namespace Exercise1
+namespace Objects
 {
 	std::vector<Object> cabins;
 	std::unordered_map<std::string, Object> objects;
-	
+
 	void Init()
 	{
-		RV::rota[0] = 0.6;
-		RV::rota[1] = 0.150;
-		RV::cameraPosition = { 30, -10, -33 };
-
 		objects["chicken"] = { "res/Gallina.obj" };
-		objects["support"] = { "res/Patas.obj"};
-		objects["trump"] = { "res/Trump.obj"};
-		objects["wheel"] = { "res/Rueda.obj"};
+		objects["support"] = { "res/Patas.obj" };
+		objects["trump"] = { "res/Trump.obj" };
+		objects["wheel"] = { "res/Rueda.obj" };
 
-		cabins.resize(20, { "res/Cabina.obj"});
+		cabins.resize(20, { "res/Cabina.obj" });
 	}
 
-	void Run(float dt)
+	void Render()
 	{
-		//Camera control
-		RV::_modelView = glm::translate(RV::_modelView, RenderVars::cameraPosition);
-
-
-		//Exercise logic
-		static float accum, counter = 0.f;
-		accum += dt;
-		counter += dt;
-
-		objects["wheel"].Rotate(0.1f * dt, { 0.f, 0.f, 1.f });
-		
-		float frequency = 1 / (glm::two_pi<float>() / 0.1f);
-		for (int i = 0; i < cabins.size(); ++i)
-		{
-			float alpha = glm::two_pi<float>() * frequency * accum + glm::two_pi<float>()  * i / cabins.size();
-			glm::vec3 cabinPosition = { Config::radius * cos(alpha), Config::radius * sin(alpha), 0 };
-
-			cabins[i].Translate(cabinPosition, glm::mat4(1.0f));
-		}
-		
-		float alpha = glm::two_pi<float>() * frequency * accum;
-		glm::vec3 position = { Config::radius * cos(alpha), Config::radius * sin(alpha), 0 };
-		
-		objects["chicken"].Translate(position, glm::mat4(1.0f)).Translate({1.f,-4,0}).Rotate(-1.57f, { 0.f,1.f,0.f });
-		objects["trump"].Translate(position, glm::mat4(1.0f)).Translate({ -1.f,-4,0 }).Rotate(1.57f, { 0.f,1.f,0.f });
-
-		static bool counterShot = true;
-
-		if(accum>2.f)
-		{
-			if(counter<2.f)
-			{
-				if(counterShot)
-				{
-					RV::cameraPosition.x = -objects["chicken"].GetPosition().x + 0.40;
-					RV::cameraPosition.y = -objects["chicken"].GetPosition().y - 2.7;
-					RV::cameraPosition.z = -0.6;
-				}else
-				{
-					RV::cameraPosition.x = -objects["trump"].GetPosition().x - 0.420;
-					RV::cameraPosition.y = -objects["trump"].GetPosition().y - 2.160;
-					RV::cameraPosition.z = -0.650;
-				}
-				
-			}else 
-			{
-				counterShot = !counterShot;
-				if(counterShot)
-				{
-					RV::rota[0] = -1.1f;
-					RV::rota[1] = 0.420;
-				}else
-				{
-					RV::rota[0] = 1.145;
-					RV::rota[1] = 0.315;
-				}
-				counter = 0.f;
-			}
-		}
-		
 		for (auto& object : objects)
 		{
 			object.second.Render();
 		}
+
 		for (auto& cabin : cabins)
 		{
 			cabin.Render();
+		}
+	}
+
+	void Render(std::vector<std::string> keys)
+	{
+		for (auto& key : keys)
+		{
+			objects[key].Render();
 		}
 	}
 
@@ -793,6 +738,112 @@ namespace Exercise1
 		}
 
 		objects.clear();
+	}
+
+	void Translate(std::string key, glm::vec3 position)
+	{
+		objects[key].Translate(position);
+	}
+
+	void Translate(std::string key, glm::vec3 position, glm::mat4 matrix)
+	{
+		objects[key].Translate(position, matrix);
+	}
+
+	void Rotate(std::string key, float angle, glm::vec3 rotationAxis)
+	{
+		objects[key].Rotate(angle, rotationAxis);
+	}
+
+	glm::vec3 GetPosition(std::string key)
+	{
+		return objects[key].GetPosition();
+	}
+
+	void SpinCabins(float frequency, float accum)
+	{
+		for (int i = 0; i < cabins.size(); ++i)
+		{
+			float alpha = glm::two_pi<float>() * frequency * accum + glm::two_pi<float>()  * i / cabins.size();
+			glm::vec3 cabinPosition = { Config::radius * cos(alpha), Config::radius * sin(alpha), 0 };
+
+			cabins[i].Translate(cabinPosition, glm::mat4(1.0f));
+		}
+	}
+}
+
+namespace Exercise1
+{
+	void Init()
+	{
+		RV::rota[0] = 0.6;
+		RV::rota[1] = 0.150;
+		RV::cameraPosition = { 30, -10, -33 };
+	}
+
+	void Run(float dt)
+	{
+		//Camera control
+		RV::_modelView = glm::translate(RV::_modelView, RenderVars::cameraPosition);
+
+
+		//Exercise logic
+		static float accum, counter = 0.f;
+		accum += dt;
+		counter += dt;
+
+		Objects::Rotate("wheel", 0.1f * dt, { 0.f, 0.f, 1.f });
+
+		float frequency = 1 / (glm::two_pi<float>() / 0.1f);
+
+		Objects::SpinCabins(frequency, accum);
+		
+		float alpha = glm::two_pi<float>() * frequency * accum;
+		glm::vec3 position = { Config::radius * cos(alpha), Config::radius * sin(alpha), 0 };
+		
+		Objects::Translate("chicken", position, glm::mat4(1.0f));
+		Objects::Translate("chicken", { 1.f, -4,0 });
+		Objects::Rotate("chicken", -1.57f, { 0.f, 1.f, 0.f });
+
+		Objects::Translate("trump", position, glm::mat4(1.0f));
+		Objects::Translate("trump", { -1.f, -4,0 });
+		Objects::Rotate("trump", 1.57f, { 0.f, 1.f, 0.f });
+
+		static bool counterShot = true;
+
+		if (accum > 2.f)
+		{
+			if(counter < 2.f)
+			{
+				if (counterShot)
+				{
+					RV::cameraPosition = -Objects::GetPosition("chicken") + glm::vec3(0.40, -2.7, -0.6);
+				}
+				else
+				{
+					RV::cameraPosition = -Objects::GetPosition("trump") + glm::vec3(-0.420, -2.160, -0.650);
+				}	
+			}
+			else 
+			{
+				counterShot = !counterShot;
+
+				if(counterShot)
+				{
+					RV::rota[0] = -1.1f;
+					RV::rota[1] = 0.420;
+				}
+				else
+				{
+					RV::rota[0] = 1.145;
+					RV::rota[1] = 0.315;
+				}
+
+				counter = 0.f;
+			}
+		}
+		
+		Objects::Render();
 	}
 }
 
@@ -833,6 +884,8 @@ void GLinit(int width, int height)
 	RV::_projection = glm::perspective(RV::FOV, (float)width / (float)height, RV::zNear, RV::zFar);
 	Axis::setupAxis();
 
+
+	Objects::Init();
 	Exercise1::Init();
 }
 
@@ -871,7 +924,7 @@ void GLrender(float dt)
 void GLcleanup()
 {
 	Axis::cleanupAxis();
-
+	Objects::Clean();
 }
 
 void GUI()
@@ -910,10 +963,9 @@ void GUI()
 	ImGui::End();
 		
 	bool objectShow;
-
 	ImGui::Begin("Objects", &objectShow);
 	{
-		for (auto& object : Exercise1::objects)
+		for (auto& object : Objects::objects)
 		{
 			if (ImGui::TreeNode(object.first.c_str()))
 			{	
@@ -932,7 +984,6 @@ void GUI()
 	ImGui::End();
 
 	bool lightShow;
-
 	ImGui::Begin("Light Parameters");
 	{
 		ImGui::DragFloat3("Light Position", static_cast<float*>(&Object::lightPosition.x), 0.1f);
