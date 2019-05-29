@@ -549,6 +549,8 @@ private:
 		return true;
 	}
 
+
+
 public:
 
 	static float kAmbient, kDiffuse, kSpecular, specularPower;
@@ -583,6 +585,7 @@ public:
 
 		const auto vertex_shader = Shader::ParseShader("res/object/Vertex.shader");
 		const auto fragment_shader = Shader::ParseShader("res/object/ToonFragment.shader");
+		const auto geometry_shader = Shader::ParseShader("res/object/Geometry.shader");
 		program = Shader::CreateProgram(vertex_shader, fragment_shader);
 	}
 
