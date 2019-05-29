@@ -24,13 +24,34 @@ void main()
 
 	float diff = max(dot(norm, lightDir), 0.0);
 	bool diffChanged = false;
-	
+	for (int i = 0; i < 4; i++)
+	{
+		if (!diffChanged)
+		{
+			if (diff <= i / 4)
+			{
+				diff = i / 4;
+				diffChanged = true;
+			}
+		}
+	}
+
+	if (diff < 0.2f) diff = 0.f;
+	else if (diff < 0.4f) diff = 0.2f;
+	else if (diff < 0.5f) diff = 0.4f;
+	else diff = 1.f;
 
 	vec3 diffuse = diffStrength * diff * lightColor;
 	vec4 viewDir = normalize(-fragPos);
 	vec4 reflectDir = reflect(-lightDir, norm);
 
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), specularPower);
+
+	if (spec < 0.2f) spec = 0.f;
+	else if (spec < 0.4f) spec = 0.2f;
+	else if (spec < 0.5f) spec = 0.4f;
+	else spec = 1.f;
+
 	vec3 specular = specularStrength * spec * lightColor;
 	
 	vec3 result = ambient + diffuse + specular;

@@ -144,6 +144,7 @@ xcopy "$(ProjectDir)libs\SDL2.dll" "$(OutDir)" /y /d</Command>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\object\Fragment.shader" />
+    <None Include="res\object\ToonFragment.shader" />
     <None Include="res\object\Vertex.shader" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

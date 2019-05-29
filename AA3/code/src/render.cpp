@@ -559,7 +559,7 @@ public:
 
 	Object() = default;
 
-	Object(const char * path)
+	Object(const char * path, glm::vec3 color = {1,1,1}):objectColor(color)
 	{
 		if (!Load(path, vertices, uvs, normals))
 		{
@@ -582,35 +582,7 @@ public:
 		glEnableVertexAttribArray(1);
 
 		const auto vertex_shader = Shader::ParseShader("res/object/Vertex.shader");
-		const auto fragment_shader = Shader::ParseShader("res/object/Fragment.shader");
-		program = Shader::CreateProgram(vertex_shader, fragment_shader);
-	}
-
-
-	void Setup(const char * path)
-	{
-		if (!Load(path, vertices, uvs, normals))
-		{
-			std::cout << "Could not load model at path: " << path << std::endl;
-		}
-
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
-
-		glGenBuffers(2, vbo);
-
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3)*vertices.size(), vertices.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(0);
-
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * normals.size(), normals.data(), GL_STATIC_DRAW);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		glEnableVertexAttribArray(1);
-
-		const auto vertex_shader = Shader::ParseShader("res/object/Vertex.shader");
-		const auto fragment_shader = Shader::ParseShader("res/object/Fragment.shader");
+		const auto fragment_shader = Shader::ParseShader("res/object/ToonFragment.shader");
 		program = Shader::CreateProgram(vertex_shader, fragment_shader);
 	}
 
@@ -679,11 +651,11 @@ public:
 
 const glm::mat4& Object::view = RV::_modelView;
 const glm::mat4& Object::projection = RV::_projection;
-glm::vec3 Object::lightColor = glm::vec3();
+glm::vec3 Object::lightColor = glm::vec3(1.f,1.f,1.f);
 glm::vec3 Object::lightPosition = glm::vec3();
-float Object::kAmbient = 1.0f;
-float Object::kDiffuse = 0.0f;
-float Object::kSpecular = 0.0f;
+float Object::kAmbient = 0.5f;
+float Object::kDiffuse = 0.5f;
+float Object::kSpecular = 0.5f;
 float Object::specularPower = 2.0f;
 
 
@@ -697,9 +669,9 @@ namespace Objects
 
 	void Init()
 	{
-		objects["chicken"] = { "res/Gallina.obj" };
+		objects["chicken"] = { "res/Gallina.obj",{1,1,0} };
 		objects["support"] = { "res/Patas.obj" };
-		objects["trump"] = { "res/Trump.obj" };
+		objects["trump"] = { "res/Trump.obj" ,{1,1,0} };
 		objects["wheel"] = { "res/Rueda.obj" };
 
 		cabins.resize(20, { "res/Cabina.obj" });
@@ -707,15 +679,16 @@ namespace Objects
 
 	void Render()
 	{
+		for (auto& cabin : cabins)
+		{
+			cabin.Render();
+		}
 		for (auto& object : objects)
 		{
 			object.second.Render();
 		}
 
-		for (auto& cabin : cabins)
-		{
-			cabin.Render();
-		}
+		
 	}
 
 	void Render(std::vector<std::string> keys)
