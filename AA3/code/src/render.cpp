@@ -455,7 +455,41 @@ namespace Shader
 	{
 		glUniform1fv(glGetUniformLocation(program, name.c_str()), count, values);
 	}
+
+	void SetVec3(unsigned int program, const std::string& name, glm::vec3 value)
+	{
+		glUniform3f(glGetUniformLocation(program, name.c_str()), value.x, value.y, value.z);
+	}
+
+	void SetVec3Array(unsigned int program, const std::string& name, size_t count, float* values)
+	{
+		glUniform3fv(glGetUniformLocation(program, name.c_str()), count, values);
+	}
+
+	void SetVec4Array(unsigned int program, const std::string& name, size_t count, float* values)
+	{
+		glUniform4fv(glGetUniformLocation(program, name.c_str()), count, values);
+	}
+
+	void SetBool(unsigned int program, const std::string& name, bool value)
+	{
+		glUniform1i(glGetUniformLocation(program, name.c_str()), value);
+	}
+
+	void SetInt(unsigned int program, const std::string& name, int value)
+	{
+		glUniform1i(glGetUniformLocation(program, name.c_str()), value);
+	}
 }
+
+namespace Light
+{
+	float kAmbient[2], kDiffuse[2], kSpecular[2], specularPower[2];
+	glm::vec4 positions[2] = { { 0.0, 0.0, 0.0, 1.0 }, { 0.0, 0.0, 0.0, 1.0 } };
+	glm::vec3 colors[2];
+
+	int counts = 2;
+};
 
 class Object
 {
@@ -553,11 +587,10 @@ private:
 
 public:
 
-	static float kAmbient, kDiffuse, kSpecular, specularPower;
-	static glm::vec3 lightPosition, lightColor;
-
 	bool active;
 	glm::vec3 objectColor;
+
+	bool useToon = false, useStencil = false;
 
 	Object() = default;
 
@@ -622,12 +655,13 @@ public:
 		glBindVertexArray(vao);
 		glUseProgram(program);
 
-		auto viewLightPosition = RenderVars::_modelView * glm::vec4(lightPosition, 1.f);
-
 		Shader::SetMat4(program, "model", model);
+		Shader::SetMat4(program, "projection", projection);
 		Shader::SetMat4(program, "view", view);
 		Shader::SetMat4(program, "mvp", projection * view * model);
 
+
+		/* TODO: Check if this works.
 		glUniform3f(glGetUniformLocation(program, "objectColor"), objectColor[0], objectColor[1], objectColor[2]);
 		glUniform3f(glGetUniformLocation(program, "lightColor"), lightColor[0], lightColor[1], lightColor[2]);
 		glUniform4f(glGetUniformLocation(program, "lightPos"), viewLightPosition[0], viewLightPosition[1], viewLightPosition[2], viewLightPosition[3]);
@@ -636,6 +670,21 @@ public:
 		Shader::SetFloat(program, "specularStrength", kSpecular);
 		Shader::SetFloat(program, "specularPower", specularPower);
 		Shader::SetFloat(program, "diffStrength", kDiffuse);
+		*/
+
+
+		Shader::SetVec3(program, "objectColor", objectColor);
+		Shader::SetVec3Array(program, "lightColor", 6, &Light::colors[0].x);
+		Shader::SetVec4Array(program, "lightPos", 6, &Light::positions[0].x);
+
+		Shader::SetFloatArray(program, "ambientStrength", 6, Light::kAmbient);
+		Shader::SetFloatArray(program, "specularStrength", 6, Light::kSpecular);
+		Shader::SetFloatArray(program, "specularPower", 6, Light::specularPower);
+		Shader::SetFloatArray(program, "diffStrength", 6, Light::kDiffuse);
+
+		Shader::SetBool(program, "useToon", useToon);
+		Shader::SetBool(program, "useStencil", useStencil);
+		Shader::SetInt(program, "lightCounts", Light::counts);
 
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 	}
@@ -672,13 +721,8 @@ public:
 
 const glm::mat4& Object::view = RV::_modelView;
 const glm::mat4& Object::projection = RV::_projection;
-glm::vec3 Object::lightColor = glm::vec3(1.f,1.f,1.f);
-glm::vec3 Object::lightPosition = glm::vec3();
-float Object::kAmbient = 0.5f;
-float Object::kDiffuse = 0.5f;
-float Object::kSpecular = 0.5f;
-float Object::specularPower = 2.0f;
 
+float accum = 0.f, counter = 0.f;
 
 enum class Scene { EXERCISE_1, EXERCISE_2, EXERCISE_3 } scene;
 std::string sceneName;
@@ -688,6 +732,10 @@ namespace Objects
 	std::vector<Object> cabins;
 	std::unordered_map<std::string, Object> objects;
 
+	bool counterShot = true;	
+	float frequency = 1 / (glm::two_pi<float>() / 0.1f);
+
+	// Loads every model with basic shaders.
 	void Init()
 	{
 		objects["chicken"] = { "res/Gallina.obj" };
@@ -754,7 +802,7 @@ namespace Objects
 		return objects[key].GetPosition();
 	}
 
-	void SpinCabins(float frequency, float accum)
+	void SpinCabins()
 	{
 		for (int i = 0; i < cabins.size(); ++i)
 		{
@@ -765,7 +813,7 @@ namespace Objects
 		}
 	}
 
-	void SpinPassengers(float frequency, float accum)
+	void SpinPassengers()
 	{
 		float alpha = glm::two_pi<float>() * frequency * accum;
 		glm::vec3 position = { Config::radius * cos(alpha), Config::radius * sin(alpha), 0 };
@@ -773,14 +821,7 @@ namespace Objects
 		objects["chicken"].Translate(position, glm::mat4(1.0f)).Translate({ 1.f, -4,0 }).Rotate(-1.57f, { 0.f, 1.f, 0.f });
 		objects["trump"].Translate(position, glm::mat4(1.0f)).Translate({ -1.f, -4,0 }).Rotate(1.57f, { 0.f, 1.f, 0.f });
 	}
-}
 
-namespace Exercise1
-{
-	float accum, counter = 0.f;
-	bool counterShot = true;
-	float frequency = 1 / (glm::two_pi<float>() / 0.1f);
-	
 	void CounterShot()
 	{
 		if (accum < 2.f) return;
@@ -789,12 +830,12 @@ namespace Exercise1
 		{
 			if (counterShot)
 			{
-				RV::cameraPosition = -Objects::GetPosition("chicken") + glm::vec3(0.40, -2.7, -0.6);
+				RV::cameraPosition = -GetPosition("chicken") + glm::vec3(0.40, -2.7, -0.6);
 				RV::cameraRotation = { -1.1f, 0.420 };
 			}
 			else
 			{
-				RV::cameraPosition = -Objects::GetPosition("trump") + glm::vec3(-0.420, -2.160, -0.650);
+				RV::cameraPosition = -GetPosition("trump") + glm::vec3(-0.420, -2.160, -0.650);
 				RV::cameraRotation = { 1.145, 0.315 };
 			}
 		}
@@ -804,7 +845,10 @@ namespace Exercise1
 			counter = 0.f;
 		}
 	}
+}
 
+namespace Exercise1
+{
 	void Init()
 	{
 		RV::cameraRotation = { 0.6, 0.150 };
@@ -813,15 +857,12 @@ namespace Exercise1
 
 	void Run(float dt)
 	{
-		accum += dt;
-		counter += dt;
-
 		Objects::Rotate("wheel", 0.1f * dt, { 0.f, 0.f, 1.f });
 
-		Objects::SpinCabins(frequency, accum);
-		Objects::SpinPassengers(frequency, accum);
-		
-		CounterShot();
+		Objects::SpinCabins();
+		Objects::SpinPassengers();
+
+		Objects::CounterShot();
 
 		Objects::Render();
 	}	
@@ -831,17 +872,22 @@ namespace Exercise2
 {
 	void Init()
 	{
-		RV::panv[0] = 0.f;
-		RV::panv[1] = 0.f;
-		RV::panv[2] = -10.f;
+		RV::cameraRotation = { 0.6, 0.150 };
+		RV::cameraPosition = { 30, -10, -33 };
 
-		Objects::Translate("trump", { 0.f, 0.f, 0.f }, glm::mat4(1.f));
-		Objects::Translate("chicken", { 0.f, 0.f, 0.f }, glm::mat4(1.f));
+		counter = 0.f;
 	}
 
 	void Run(float dt)
 	{
-		Objects::Render({ "trump", "chicken" });
+		Objects::Rotate("wheel", 0.1f * dt, { 0.f, 0.f, 1.f });
+
+		Objects::SpinCabins();
+		Objects::SpinPassengers();
+
+		Objects::CounterShot();
+
+		Objects::Render();
 	}
 }
 
@@ -897,6 +943,9 @@ void GLinit(int width, int height)
 void GLrender(float dt)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	accum += dt;
+	counter += dt;
 
 	switch (scene)
 	{
@@ -1004,12 +1053,24 @@ void GUI()
 	bool lightShow;
 	ImGui::Begin("Light Parameters");
 	{
-		ImGui::DragFloat3("Light Position", static_cast<float*>(&Object::lightPosition.x), 0.1f);
-		ImGui::ColorEdit3("Light Color", static_cast<float*>(&Object::lightColor.x));
-		ImGui::DragFloat("K_amb", &Object::kAmbient, 0.01f, 0.f, 1.f);
-		ImGui::DragFloat("K_dif", &Object::kDiffuse, 0.01f, 0.f, 1.f);
-		ImGui::DragFloat("K_spe", &Object::kSpecular, 0.01f, 0.f, 1.f);
-		ImGui::DragFloat("Specular Power", &Object::specularPower, 1.f, 2.f, 256.f);
+		for (int i = 0; i < Light::counts; ++i)
+		{
+			ImGui::PushID(i);
+
+			if (ImGui::TreeNode("Light"))
+			{				
+				ImGui::DragFloat3("Light Position", static_cast<float*>(&Light::positions[i].x), 0.1f);
+				ImGui::ColorEdit3("Light Color", static_cast<float*>(&Light::colors[i].x));
+				ImGui::DragFloat("K_amb", &Light::kAmbient[i], 0.01f, 0.f, 1.f);
+				ImGui::DragFloat("K_dif", &Light::kDiffuse[i], 0.01f, 0.f, 1.f);
+				ImGui::DragFloat("K_spe", &Light::kSpecular[i], 0.01f, 0.f, 1.f);
+				ImGui::DragFloat("Specular Power", &Light::specularPower[i], 1.f, 2.f, 256.f);
+
+				ImGui::TreePop();
+			}
+			
+			ImGui::PopID();
+		}
 	}
 	ImGui::End();
 }
