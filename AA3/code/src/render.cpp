@@ -509,6 +509,22 @@ namespace Light
 	glm::vec3 colors[2];
 
 	int counts = 2;
+
+	void Init()
+	{
+		positions[0] = { 0.0, 0.0, 0.0, 1.0 };
+		positions[1] = { 0.0, 0.0, 0.0, 1.0 };
+
+		kAmbient[0] = 0.5f;
+		kDiffuse[0] = 0.5f;
+		kSpecular[0] = 0.5f;
+		specularPower[0] = 2.f;
+	}
+
+	void SetColor(int index, glm::vec3 color)
+	{
+		colors[index] = color;
+	}
 };
 
 class Object
@@ -833,6 +849,19 @@ namespace Objects
 		return objects[key].GetPosition();
 	}
 
+	void SetColor(std::string key, glm::vec3 color)
+	{
+		objects[key].objectColor = color;
+	}
+
+	void SetCabinsColor(glm::vec3 color)
+	{
+		for (auto& cabin : cabins)
+		{
+			cabin.objectColor = color;
+		}
+	}
+
 	void SpinCabins()
 	{
 		for (int i = 0; i < cabins.size(); ++i)
@@ -884,6 +913,13 @@ namespace Exercise1
 	{
 		RV::cameraRotation = { 0.6, 0.150 };
 		RV::cameraPosition = { 30, -10, -33 };
+
+		Objects::SetColor("trump", { 1.f, 0.f, 0.f });
+		Objects::SetColor("chicken", { 0.f, 0.f, 1.f });
+		Objects::SetColor("support", { 1.f, 1.f, 1.f });
+		Objects::SetCabinsColor({ 1.f, 1.f, 1.f });
+
+		Light::SetColor(0, { 1.f, 1.f, 1.f });
 	}
 
 	void Run(float dt)
@@ -966,7 +1002,7 @@ void GLinit(int width, int height)
 	RV::_projection = glm::perspective(RV::FOV, (float)width / (float)height, RV::zNear, RV::zFar);
 	Axis::setupAxis();
 
-
+	Light::Init();
 	Objects::Init();
 	Exercise1::Init();
 }
@@ -978,18 +1014,15 @@ void GLrender(float dt)
 	accum += dt;
 	counter += dt;
 
+	Camera::Setup(RV::cameraRotation, RV::cameraPosition);
+
 	switch (scene)
 	{
-	case Scene::EXERCISE_1:
-		//Camera::Setup(RV::cameraRotation, RV::cameraPosition);
-		Camera::Setup({ RV::panv[0], RV::panv[1], RV::panv[2] }, { RV::rota[0], RV::rota[1] });
-
+	case Scene::EXERCISE_1:		
 		Exercise1::Run(dt);
 		break;
 
 	case Scene::EXERCISE_2:
-		// Camera::Setup(RV::cameraRotation, RV::cameraPosition);
-		Camera::Setup({ RV::panv[0], RV::panv[1], RV::panv[2] }, { RV::rota[0], RV::rota[1] });
 		Exercise2::Run(dt);
 		break;
 
@@ -1049,10 +1082,13 @@ void GUI()
 			if (ImGui::TreeNode(object.first.c_str()))
 			{	
 				ImGui::Checkbox("Active", &object.second.active);
-
+				ImGui::SameLine();
+				ImGui::Checkbox("Toon", &object.second.useToon);
+				ImGui::SameLine();
+				ImGui::Checkbox("Stencil", &object.second.useStencil);
+	
 				glm::vec3 transform = object.second.GetPosition();
-				ImGui::DragFloat3("Transform", &transform.x, 0.1);
-				
+				ImGui::DragFloat3("Transform", &transform.x, 0.1);	
 
 				ImGui::ColorEdit3("Object Color", &object.second.objectColor.x);
 
@@ -1064,11 +1100,15 @@ void GUI()
 		{
 			ImGui::PushID(i);
 
-			if (ImGui::TreeNode("Cabin"))
+			if (ImGui::TreeNode("cabin"))
 			{
 				auto& cabin = Objects::cabins[i];
 
 				ImGui::Checkbox("Active", &cabin.active);
+				ImGui::SameLine();
+				ImGui::Checkbox("Toon", &cabin.useToon);
+				ImGui::SameLine();
+				ImGui::Checkbox("Stencil", &cabin.useStencil);
 
 				glm::vec3 transform = cabin.GetPosition();
 				ImGui::DragFloat3("Transform", &transform.x, 0.1);
