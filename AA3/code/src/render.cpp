@@ -366,6 +366,7 @@ void drawCube()
 namespace Config
 {
 	float radius = 28.5f;
+	bool activateBulb = false;
 }
 
 namespace Shader
@@ -505,25 +506,38 @@ namespace Shader
 namespace Light
 {
 	float kAmbient[2], kDiffuse[2], kSpecular[2], specularPower[2];
-	glm::vec4 positions[2] = { { 0.0, 0.0, 0.0, 1.0 }, { 0.0, 0.0, 0.0, 1.0 } };
+	glm::vec4 positions[2];
 	glm::vec3 colors[2];
 
 	int counts = 2;
 
 	void Init()
 	{
-		positions[0] = { 0.0, 0.0, 0.0, 1.0 };
-		positions[1] = { 0.0, 0.0, 0.0, 1.0 };
-
-		kAmbient[0] = 0.5f;
-		kDiffuse[0] = 0.5f;
-		kSpecular[0] = 0.5f;
-		specularPower[0] = 2.f;
+		for (int i = 0; i < counts; ++i)
+		{
+			positions[i] = { 0.0, 0.0, 0.0, 1.0 };
+			colors[i] = { 1.0, 1.0, 1.0 };
+			kAmbient[i] = 0.5f;
+			kDiffuse[i] = 0.5f;
+			kSpecular[i] = 0.5f;
+			specularPower[i] = 2.f;
+		}
+		
 	}
 
 	void SetColor(int index, glm::vec3 color)
 	{
 		colors[index] = color;
+	}
+
+	void SetPosition(int index, glm::vec3 position)
+	{
+		positions[index] = glm::vec4(position, 1.f);
+	}
+
+	void SetCounts(int number)
+	{
+		counts = number;
 	}
 };
 
@@ -753,8 +767,6 @@ const glm::mat4& Object::projection = RV::_projection;
 
 float accum = 0.f, counter = 0.f;
 
-enum class Scene { EXERCISE_1, EXERCISE_2, EXERCISE_3 } scene;
-std::string sceneName;
 
 namespace Objects
 {
@@ -774,6 +786,23 @@ namespace Objects
 
 		cabins.resize(20, { "res/Cabina.obj" });
 	}
+
+	void Clean()
+	{
+		for (auto& object : objects)
+		{
+			object.second.Clean();
+		}
+
+		for (auto& cabin : cabins)
+		{
+			cabin.Clean();
+		}
+
+		objects.clear();
+	}
+
+	#pragma region RENDER FUNCTIONS
 
 	void Render()
 	{
@@ -796,21 +825,9 @@ namespace Objects
 		}
 	}
 
-	void Clean()
-	{
-		for (auto& object : objects)
-		{
-			object.second.Clean();
-		}
+	#pragma endregion	
 
-		for (auto& cabin : cabins)
-		{
-			cabin.Clean();
-		}
-
-		objects.clear();
-	}
-
+	#pragma region HELPER FUNCTIONS
 	void Translate(std::string key, glm::vec3 position)
 	{
 		objects[key].Translate(position);
@@ -861,6 +878,7 @@ namespace Objects
 			cabin.objectColor = color;
 		}
 	}
+	#pragma endregion 
 
 	void SpinCabins()
 	{
@@ -880,6 +898,14 @@ namespace Objects
 
 		objects["chicken"].Translate(position, glm::mat4(1.0f)).Translate({ 1.f, -4,0 }).Rotate(-1.57f, { 0.f, 1.f, 0.f });
 		objects["trump"].Translate(position, glm::mat4(1.0f)).Translate({ -1.f, -4,0 }).Rotate(1.57f, { 0.f, 1.f, 0.f });
+	}
+
+	void MoveBulb(float dt)
+	{
+		float alpha = glm::two_pi<float>() * frequency * accum;
+		glm::vec3 position = { Config::radius * cos(alpha), Config::radius * sin(alpha), 0 };
+
+		Light::SetPosition(1, position);
 	}
 
 	void CounterShot()
@@ -907,7 +933,7 @@ namespace Objects
 	}
 }
 
-namespace Exercise1
+namespace Exercise
 {
 	void Init()
 	{
@@ -920,6 +946,7 @@ namespace Exercise1
 		Objects::SetCabinsColor({ 1.f, 1.f, 1.f });
 
 		Light::SetColor(0, { 1.f, 1.f, 1.f });
+		Light::SetColor(1, { 0.f, 0.f, 1.f });
 	}
 
 	void Run(float dt)
@@ -928,34 +955,19 @@ namespace Exercise1
 
 		Objects::SpinCabins();
 		Objects::SpinPassengers();
+
+		Light::SetCounts(1);
+
+		if (Config::activateBulb)
+		{
+			Objects::MoveBulb(dt);
+			Light::SetCounts(2);
+		}
 
 		Objects::CounterShot();
 
 		Objects::Render();
 	}	
-}
-
-namespace Exercise2
-{
-	void Init()
-	{
-		RV::cameraRotation = { 0.6, 0.150 };
-		RV::cameraPosition = { 30, -10, -33 };
-
-		counter = 0.f;
-	}
-
-	void Run(float dt)
-	{
-		Objects::Rotate("wheel", 0.1f * dt, { 0.f, 0.f, 1.f });
-
-		Objects::SpinCabins();
-		Objects::SpinPassengers();
-
-		Objects::CounterShot();
-
-		Objects::Render();
-	}
 }
 
 namespace Camera
@@ -1004,7 +1016,7 @@ void GLinit(int width, int height)
 
 	Light::Init();
 	Objects::Init();
-	Exercise1::Init();
+	Exercise::Init();
 }
 
 void GLrender(float dt)
@@ -1015,20 +1027,7 @@ void GLrender(float dt)
 	counter += dt;
 
 	Camera::Setup(RV::cameraRotation, RV::cameraPosition);
-
-	switch (scene)
-	{
-	case Scene::EXERCISE_1:		
-		Exercise1::Run(dt);
-		break;
-
-	case Scene::EXERCISE_2:
-		Exercise2::Run(dt);
-		break;
-
-	case Scene::EXERCISE_3:
-		break;
-	}
+	Exercise::Run(dt);
 
 	ImGui::Render();
 }
@@ -1046,31 +1045,7 @@ void GUI()
 	{
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::DragFloat("Radius", &Config::radius, 0.1f);
-		ImGui::DragFloat3("Camera position", &RV::panv[0], 1);
-		ImGui::DragFloat3("Camera rotation", &RV::rota[0], 1);
-
-		if (ImGui::Button("Change Exercise"))
-		{
-			scene = static_cast<Scene>((static_cast<int>(scene) + 1) % 3);
-
-			switch (scene)
-			{
-			case Scene::EXERCISE_1:
-				sceneName = "Scene composition";
-				break;
-
-			case Scene::EXERCISE_2:
-				sceneName = "Lightning and shaders";
-				Exercise2::Init();
-				break;
-
-			case Scene::EXERCISE_3:
-				sceneName = "Advanced rendering";
-				break;
-			}
-		}
-
-		ImGui::Text(sceneName.c_str());
+		ImGui::Checkbox("Activate Bulb", &Config::activateBulb);
 	}
 	ImGui::End();
 		
@@ -1090,7 +1065,7 @@ void GUI()
 				glm::vec3 transform = object.second.GetPosition();
 				ImGui::DragFloat3("Transform", &transform.x, 0.1);	
 
-				ImGui::ColorEdit3("Object Color", &object.second.objectColor.x);
+				ImGui::ColorEdit3("Color", &object.second.objectColor.x);
 
 				ImGui::TreePop();
 			}
