@@ -8,13 +8,13 @@ out vec4 out_Color;
 uniform mat4 view;
 uniform mat4 model;
 uniform vec3 objectColor;
-uniform vec3 lightColor[2];
-uniform vec4 lightPos[2];
+uniform vec3 lightColor;
+uniform vec4 lightPos;
 
-uniform float ambientStrength[2];
-uniform float specularStrength[2];
-uniform float specularPower[2];
-uniform float diffStrength[2];
+uniform float ambientStrength;
+uniform float specularStrength;
+uniform float specularPower;
+uniform float diffStrength;
 
 uniform int lightCount;
 
@@ -25,7 +25,7 @@ void main()
 	vec3 ambient = vec3(0.0, 0.0, 0.0);
 	for (int i = 0; i < lightCount; i++) 
 	{
-		ambient += ambientStrength[i] * lightColor[i];
+		ambient += ambientStrength * lightColor;
 	}
 
 	vec4 norm = normalize(gNormal);		
@@ -35,7 +35,7 @@ void main()
 	{
 		float diff;
 
-		vec4 lightDir = normalize(view * lightPos[i] - gFragPos);
+		vec4 lightDir = normalize(view * lightPos - gFragPos);
 		diff = max(dot(norm, lightDir), 0.0);
 
 		if (useToon == 1) 
@@ -46,7 +46,7 @@ void main()
 			else diff = 1.f;
 		}
 	
-		diffuse += diffStrength[i] * diff * lightColor[i];
+		diffuse += diffStrength * diff * lightColor;
 	}
 	
 	vec4 viewDir = normalize(-gFragPos);
@@ -54,10 +54,10 @@ void main()
 
 	for (int i = 0; i < lightCount; i++)
 	{
-		vec4 lightDir = normalize(view * lightPos[i] - gFragPos);
+		vec4 lightDir = normalize(view * lightPos - gFragPos);
 		vec4 reflectDir = reflect(-lightDir, norm);
 
-		float spec = pow(max(dot(viewDir, reflectDir), 0.0), specularPower[i]);
+		float spec = pow(max(dot(viewDir, reflectDir), 0.0), specularPower);
 		
 		if (useToon == 1)
 		{
@@ -67,7 +67,7 @@ void main()
 			else spec = 1.f;
 		}
 
-		specular += specularStrength[i] * spec * lightColor[i];
+		specular += specularStrength * spec * lightColor;
 	}
 	
 

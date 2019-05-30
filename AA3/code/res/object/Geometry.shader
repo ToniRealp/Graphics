@@ -5,10 +5,11 @@ layout(triangle_strip, max_vertices = 15) out;
 
 in vec4 vNormal[];
 in vec2 vUvs[];
+in vec4 vFragPos[];
 
 out vec2 gUvs;
 out vec4 gNormal;
-out vec4 fragPos;
+out vec4 gFragPos;
 
 uniform mat4 projection;
 uniform float time;
@@ -31,10 +32,13 @@ void main()
 			vert += (gl_in[i].gl_Position - cent) * 0.5;
 		}
 
-		gl_Position = projection * vert;
+		gl_Position = vert;
 		gNormal = vNormal[i];
-		gUvs = uvs[i];
+		gUvs = vUvs[i];
+		gFragPos = vFragPos[i];
+
 		EmitVertex();
 	}
+
 	EndPrimitive();
 }

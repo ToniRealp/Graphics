@@ -143,6 +143,7 @@ xcopy "$(ProjectDir)libs\SDL2.dll" "$(OutDir)" /y /d</Command>
     <ClCompile Include="src\render.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="res\object\FragmentTemporary.shader" />
     <None Include="res\object\Fragment.shader" />
     <None Include="res\object\Vertex.shader" />
   </ItemGroup>

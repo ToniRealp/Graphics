@@ -31,7 +31,7 @@ void drawAxis();
 
 namespace RenderVars {
 	const float FOV = glm::radians(65.f);
-	const float zNear = 0.f;
+	const float zNear = 0.1f;
 	const float zFar = 50.f;
 
 	glm::mat4 _projection;
@@ -385,6 +385,26 @@ namespace Shader
 			glGetShaderiv(id, GL_INFO_LOG_LENGTH, &res);
 			char *buff = new char[res];
 			glGetShaderInfoLog(id, res, &res, buff);
+
+			switch (type)
+			{
+				case GL_FRAGMENT_SHADER:
+					std::cout << "FRAGMENT SHADER" << std::endl;
+					break;
+
+				case GL_VERTEX_SHADER:
+					std::cout << "VERTEX SHADER" << std::endl;
+					break;
+
+				case GL_GEOMETRY_SHADER:
+					std::cout << "GEOMETRY SHADER" << std::endl;
+					break;
+
+				default:
+					std::cout << "NON-HANDLED SHADER" << std::endl;
+					break;
+			}
+			
 			fprintf(stderr, "Error Shader %s", buff);
 			delete[] buff;
 			glDeleteShader(id);
@@ -494,7 +514,7 @@ namespace Light
 class Object
 {
 private:
-	unsigned int vao{}, vbo[2]{};
+	unsigned int vao{}, vbo[3]{};
 	unsigned int program{};
 
 	static const glm::mat4& view;
@@ -606,7 +626,7 @@ public:
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
 
-		glGenBuffers(2, vbo);
+		glGenBuffers(3, vbo);
 
 		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
@@ -618,10 +638,16 @@ public:
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
 		glEnableVertexAttribArray(1);
 
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * uvs.size(), uvs.data(), GL_STATIC_DRAW);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(2);
+
 		const auto vertex_shader = Shader::ParseShader("res/object/Vertex.shader");
-		const auto fragment_shader = Shader::ParseShader("res/object/Fragment.shader");
+		const auto fragment_shader = Shader::ParseShader("res/object/FragmentTemporary.shader");
+		const auto geometry_shader = Shader::ParseShader("res/object/Geometry.shader");
 		
-		program = Shader::CreateProgram(vertex_shader, fragment_shader);
+		program = Shader::CreateProgram(vertex_shader, fragment_shader, geometry_shader);
 	}
 
 	void UpdateShader(std::string vertexPath, std::string fragmentPath, std::string geometryPath)
@@ -661,19 +687,24 @@ public:
 		Shader::SetMat4(program, "mvp", projection * view * model);
 
 
-		/* TODO: Check if this works.
+		
+		// TODO: Check if this works.
 		glUniform3f(glGetUniformLocation(program, "objectColor"), objectColor[0], objectColor[1], objectColor[2]);
-		glUniform3f(glGetUniformLocation(program, "lightColor"), lightColor[0], lightColor[1], lightColor[2]);
-		glUniform4f(glGetUniformLocation(program, "lightPos"), viewLightPosition[0], viewLightPosition[1], viewLightPosition[2], viewLightPosition[3]);
+		glUniform3f(glGetUniformLocation(program, "lightColor"), Light::colors[0].x, Light::colors[0].y, Light::colors[0].z);
+		glUniform4f(glGetUniformLocation(program, "lightPos"), Light::positions[0].x, Light::positions[0].y, Light::positions[0].z, 1.f);
 
-		Shader::SetFloat(program, "ambientStrength", kAmbient);
-		Shader::SetFloat(program, "specularStrength", kSpecular);
-		Shader::SetFloat(program, "specularPower", specularPower);
-		Shader::SetFloat(program, "diffStrength", kDiffuse);
-		*/
+		Shader::SetFloat(program, "ambientStrength", Light::kAmbient[0]);
+		Shader::SetFloat(program, "specularStrength", Light::kSpecular[0]);
+		Shader::SetFloat(program, "specularPower", Light::specularPower[0]);
+		Shader::SetFloat(program, "diffStrength", Light::kDiffuse[0]);
+
+		Shader::SetBool(program, "useToon", useToon);
+		Shader::SetBool(program, "useStencil", useStencil);
+		Shader::SetInt(program, "lightCounts", 1);
+		
 
 
-		Shader::SetVec3(program, "objectColor", objectColor);
+		/*Shader::SetVec3(program, "objectColor", objectColor);
 		Shader::SetVec3Array(program, "lightColor", 6, &Light::colors[0].x);
 		Shader::SetVec4Array(program, "lightPos", 6, &Light::positions[0].x);
 
@@ -684,7 +715,7 @@ public:
 
 		Shader::SetBool(program, "useToon", useToon);
 		Shader::SetBool(program, "useStencil", useStencil);
-		Shader::SetInt(program, "lightCounts", Light::counts);
+		Shader::SetInt(program, "lightCounts", Light::counts);*/
 
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 	}
@@ -795,6 +826,24 @@ namespace Objects
 	void Rotate(std::string key, float angle, glm::vec3 rotationAxis)
 	{
 		objects[key].Rotate(angle, rotationAxis);
+	}
+
+	void UpdateShader(std::string key, std::string vertexPath, std::string fragmentPath, std::string geometryPath)
+	{
+		objects[key].UpdateShader(vertexPath, fragmentPath, geometryPath);
+	}
+
+	void UpdateShaders(std::string vertexPath, std::string fragmentPath, std::string geometryPath)
+	{
+		for (auto& object : objects)
+		{
+			object.second.UpdateShader(vertexPath, fragmentPath, geometryPath);
+		}
+
+		for (auto& cabin : cabins)
+		{
+			cabin.UpdateShader(vertexPath, fragmentPath, geometryPath);
+		}
 	}
 
 	glm::vec3 GetPosition(std::string key)
@@ -950,11 +999,14 @@ void GLrender(float dt)
 	switch (scene)
 	{
 	case Scene::EXERCISE_1:
-		Camera::Setup(RV::cameraRotation, RV::cameraPosition);
+		//Camera::Setup(RV::cameraRotation, RV::cameraPosition);
+		Camera::Setup({ RV::panv[0], RV::panv[1], RV::panv[2] }, { RV::rota[0], RV::rota[1] });
+
 		Exercise1::Run(dt);
 		break;
 
 	case Scene::EXERCISE_2:
+		// Camera::Setup(RV::cameraRotation, RV::cameraPosition);
 		Camera::Setup({ RV::panv[0], RV::panv[1], RV::panv[2] }, { RV::rota[0], RV::rota[1] });
 		Exercise2::Run(dt);
 		break;
