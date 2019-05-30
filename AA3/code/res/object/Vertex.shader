@@ -14,7 +14,7 @@ uniform mat4 mvp;
 
 void main()
 {
-	gl_Position = mvp * vec4(in_Position, 1.0);
+	gl_Position = view * model * vec4(in_Position, 1.0);
 	vNormal = view * model * vec4(in_Normal, 0.0);
 
 	vUvs = in_UVs;

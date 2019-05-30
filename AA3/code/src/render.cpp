@@ -610,7 +610,7 @@ public:
 	bool active;
 	glm::vec3 objectColor;
 
-	bool useToon = false, useStencil = false;
+	bool useToon = true, useStencil = true;
 
 	Object() = default;
 
@@ -677,6 +677,7 @@ public:
 	void Render()
 	{
 		if (!active) return;
+		glEnable(GL_STENCIL_TEST);
 
 		glBindVertexArray(vao);
 		glUseProgram(program);
@@ -696,10 +697,26 @@ public:
 		Shader::SetFloatArray(program, "diffStrength", 6, Light::kDiffuse);
 
 		Shader::SetBool(program, "useToon", useToon);
-		Shader::SetBool(program, "useStencil", useStencil);
+		Shader::SetBool(program, "useStencil", 0);
 		Shader::SetInt(program, "lightCount", Light::counts);
 
+		glStencilFunc(GL_ALWAYS, 1, 0xFF);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+		glStencilMask(0xFF);
+		glClear(GL_STENCIL_BUFFER_BIT);
+
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+
+		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+		glStencilMask(0x00);
+		glDepthMask(GL_FALSE);
+
+		Shader::SetVec3(program, "objectColor", { 0.f, 0.2f, 0.5f });
+		Shader::SetBool(program, "useStencil", useStencil);
+		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+		glDepthMask(GL_TRUE);
+
+		glDisable(GL_STENCIL_TEST);
 	}
 
 	Object& Scale(float scaleFactor)
@@ -905,6 +922,7 @@ namespace Exercise2
 	{
 		RV::cameraRotation = { 0.6, 0.150 };
 		RV::cameraPosition = { 30, -10, -33 };
+		glEnable(GL_STENCIL_TEST);
 
 		counter = 0.f;
 	}

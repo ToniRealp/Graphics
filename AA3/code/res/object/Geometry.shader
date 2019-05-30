@@ -29,10 +29,10 @@ void main()
 			vec4 vb = gl_in[1].gl_Position;
 			vec4 vc = gl_in[2].gl_Position;
 			vec4 cent = (va + vb + vc) / 3.0;
-			vert += (gl_in[i].gl_Position - cent) * 0.5;
+			vert += (gl_in[i].gl_Position - cent) * 0.5f;
 		}
 
-		gl_Position = vert;
+		gl_Position = projection * vert;
 		gNormal = vNormal[i];
 		gUvs = vUvs[i];
 		gFragPos = vFragPos[i];
