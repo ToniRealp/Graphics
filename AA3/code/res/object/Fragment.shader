@@ -1,59 +1,74 @@
 #version 330
 
-in vec4 vert_Normal;
-in vec4 fragPos;
+in vec4 gNormal;
+in vec4 gUvs;
+in vec4 fragPos
 out vec4 out_Color;
 
 uniform mat4 view;
 uniform mat4 model;
 uniform vec3 objectColor;
-uniform vec3 lightColor;
-uniform vec4 lightPos;
+uniform vec3 lightColor[];
+uniform vec4 lightPos[];
 
-uniform float ambientStrength;
-uniform float specularStrength;
-uniform float specularPower;
-uniform float diffStrength;
+uniform float ambientStrength[];
+uniform float specularStrength[];
+uniform float specularPower[];
+uniform float diffStrength[];
+uniform int lightCount;
+
+uniform int useToon, useStencil;
 
 void main()
 {
-	vec3 ambient = ambientStrength * lightColor;
-
-	vec4 norm = normalize(vert_Normal);
-	vec4 lightDir = normalize(lightPos - fragPos);
-
-	float diff = max(dot(norm, lightDir), 0.0);
-	bool diffChanged = false;
-	for (int i = 0; i < 4; i++)
+	vec3 ambient(); 
+	for (int i = 0; i < lightCount; i++) 
 	{
-		if (!diffChanged)
-		{
-			if (diff <= i / 4)
-			{
-				diff = i / 4;
-				diffChanged = true;
-			}
-		}
+		ambient += ambientStrength[i] * lightColor[i];
 	}
 
-	if (diff < 0.2f) diff = 0.f;
-	else if (diff < 0.4f) diff = 0.2f;
-	else if (diff < 0.5f) diff = 0.4f;
-	else diff = 1.f;
+	vec4 norm = normalize(gNormal);
+	vec4 lightDir[lightCount];	
+	float diff[lightCount];
+	vec3 diffuse();
 
-	vec3 diffuse = diffStrength * diff * lightColor;
+	for (int = 0; i < lightCount; i++)
+	{
+		lightDir[i] = normalize(lightPos[i] - fragPos);
+		diff[i] = max(dot(norm, lightDir[i]), 0.0);
+
+		if (useToon == 1) 
+		{
+			if (diff[i] < 0.2f) diff[i] = 0.f;
+			else if (diff[i] < 0.4f) diff[i] = 0.2f;
+			else if (diff[i] < 0.5f) diff[i] = 0.4f;
+			else diff[i] = 1.f;
+		}
+	
+		diffuse += diffStrength[i] * diff[i] * lightColor[i];
+	}
+	
 	vec4 viewDir = normalize(-fragPos);
-	vec4 reflectDir = reflect(-lightDir, norm);
+	vec4 reflectDir[]; 
+	float spec[];
+	vec3 specular();
 
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0), specularPower);
+	for (int = 0; i < lightCount; i++)
+	{
+		reflectDir[i] = reflect(-lightDir[i], norm);
+		spec[i] = pow(max(dot(viewDir, reflectDir[i]), 0.0), specularPower[i]);
+		
+		if (useToon == 1)
+		{
+			if (spec[i] < 0.2f) spec[i] = 0.f;
+			else if (spec[i] < 0.4f) spec[i] = 0.2f;
+			else if (spec[i] < 0.5f) spec[i] = 0.4f;
+			else spec[i] = 1.f;
+		}
 
-	if (spec < 0.2f) spec = 0.f;
-	else if (spec < 0.4f) spec = 0.2f;
-	else if (spec < 0.5f) spec = 0.4f;
-	else spec = 1.f;
-
-	vec3 specular = specularStrength * spec * lightColor;
-
+		specular += specularStrength[i] * spec[i] * lightColor[i];
+	}
+	
 	vec3 result = ambient + diffuse + specular;
 	out_Color = vec4(result * objectColor, 1.0);
 }
