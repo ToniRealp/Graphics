@@ -1069,8 +1069,30 @@ void GUI()
 	bool objectShow;
 	ImGui::Begin("Objects", &objectShow);
 	{
+		static char searchBuffer[20] = {};
+		static bool searching;
+		if (ImGui::InputText("Search", searchBuffer, sizeof(searchBuffer)))
+		{
+			searching = true;
+
+			if (std::string(searchBuffer).empty())
+			{
+				searching = false;
+			}
+		}
+	
+	
+		static std::string searchInput = "";
+		searchInput = std::string(searchBuffer);
+
 		for (auto& object : Objects::objects)
 		{
+			if (searching)
+			{
+				if (object.first.find(searchInput) == std::string::npos) continue;
+				if (searchInput.empty()) continue;
+			}
+			
 			if (ImGui::TreeNode(object.first.c_str()))
 			{	
 				ImGui::Checkbox("Active", &object.second.active);
@@ -1090,6 +1112,12 @@ void GUI()
 
 		for (int i = 0; i < Objects::cabins.size(); ++i)
 		{
+			if (searching)
+			{
+				if (std::string("cabin").find(searchInput) == std::string::npos) continue;
+				if (searchInput.empty()) continue;
+			}
+			
 			ImGui::PushID(i);
 
 			if (ImGui::TreeNode("cabin"))
