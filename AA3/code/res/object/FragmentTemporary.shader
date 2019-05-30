@@ -16,7 +16,7 @@ uniform float specularStrength;
 uniform float specularPower;
 uniform float diffStrength;
 
-uniform int lightCount;
+int lightCount = ;
 
 uniform int useToon, useStencil;
 

@@ -644,7 +644,7 @@ public:
 		glEnableVertexAttribArray(2);
 
 		const auto vertex_shader = Shader::ParseShader("res/object/Vertex.shader");
-		const auto fragment_shader = Shader::ParseShader("res/object/FragmentTemporary.shader");
+		const auto fragment_shader = Shader::ParseShader("res/object/Fragment.shader");
 		const auto geometry_shader = Shader::ParseShader("res/object/Geometry.shader");
 		
 		program = Shader::CreateProgram(vertex_shader, fragment_shader, geometry_shader);
@@ -686,25 +686,7 @@ public:
 		Shader::SetMat4(program, "view", view);
 		Shader::SetMat4(program, "mvp", projection * view * model);
 
-
-		
-		// TODO: Check if this works.
-		glUniform3f(glGetUniformLocation(program, "objectColor"), objectColor[0], objectColor[1], objectColor[2]);
-		glUniform3f(glGetUniformLocation(program, "lightColor"), Light::colors[0].x, Light::colors[0].y, Light::colors[0].z);
-		glUniform4f(glGetUniformLocation(program, "lightPos"), Light::positions[0].x, Light::positions[0].y, Light::positions[0].z, 1.f);
-
-		Shader::SetFloat(program, "ambientStrength", Light::kAmbient[0]);
-		Shader::SetFloat(program, "specularStrength", Light::kSpecular[0]);
-		Shader::SetFloat(program, "specularPower", Light::specularPower[0]);
-		Shader::SetFloat(program, "diffStrength", Light::kDiffuse[0]);
-
-		Shader::SetBool(program, "useToon", useToon);
-		Shader::SetBool(program, "useStencil", useStencil);
-		Shader::SetInt(program, "lightCounts", 1);
-		
-
-
-		/*Shader::SetVec3(program, "objectColor", objectColor);
+		Shader::SetVec3(program, "objectColor", objectColor);
 		Shader::SetVec3Array(program, "lightColor", 6, &Light::colors[0].x);
 		Shader::SetVec4Array(program, "lightPos", 6, &Light::positions[0].x);
 
@@ -715,7 +697,7 @@ public:
 
 		Shader::SetBool(program, "useToon", useToon);
 		Shader::SetBool(program, "useStencil", useStencil);
-		Shader::SetInt(program, "lightCounts", Light::counts);*/
+		Shader::SetInt(program, "lightCount", Light::counts);
 
 		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
 	}
