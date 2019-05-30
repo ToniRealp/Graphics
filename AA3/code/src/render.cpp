@@ -431,6 +431,7 @@ namespace Shader
 	std::string ParseShader(const std::string& path)
 	{
 		std::ifstream file(path);
+
 		if (!file.is_open()) std::cout << "Cannot open the shader at path: " + path;
 
 		std::stringstream buffer;
@@ -550,7 +551,6 @@ private:
 	}
 
 
-
 public:
 
 	static float kAmbient, kDiffuse, kSpecular, specularPower;
@@ -561,12 +561,14 @@ public:
 
 	Object() = default;
 
-	Object(const char * path, glm::vec3 color = {1,1,1}):objectColor(color)
+	Object(const char * path, glm::vec3 color = {1,1,1})
 	{
 		if (!Load(path, vertices, uvs, normals))
 		{
 			std::cout << "Could not load model at path: " << path << std::endl;
 		}
+
+		objectColor = color;
 
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
@@ -584,8 +586,24 @@ public:
 		glEnableVertexAttribArray(1);
 
 		const auto vertex_shader = Shader::ParseShader("res/object/Vertex.shader");
-		const auto fragment_shader = Shader::ParseShader("res/object/ToonFragment.shader");
-		const auto geometry_shader = Shader::ParseShader("res/object/Geometry.shader");
+		const auto fragment_shader = Shader::ParseShader("res/object/Fragment.shader");
+		
+		program = Shader::CreateProgram(vertex_shader, fragment_shader);
+	}
+
+	void UpdateShader(std::string vertexPath, std::string fragmentPath, std::string geometryPath)
+	{
+		const auto vertex_shader = Shader::ParseShader(vertexPath);
+		const auto fragment_shader = Shader::ParseShader(fragmentPath);
+
+		if (!geometryPath.empty())
+		{
+			const auto geometry_shader = Shader::ParseShader(geometryPath);
+			program = Shader::CreateProgram(vertex_shader, fragment_shader, geometry_shader);
+
+			return;
+		}
+
 		program = Shader::CreateProgram(vertex_shader, fragment_shader);
 	}
 
@@ -672,9 +690,9 @@ namespace Objects
 
 	void Init()
 	{
-		objects["chicken"] = { "res/Gallina.obj",{1,1,0} };
+		objects["chicken"] = { "res/Gallina.obj" };
 		objects["support"] = { "res/Patas.obj" };
-		objects["trump"] = { "res/Trump.obj" ,{1,1,0} };
+		objects["trump"] = { "res/Trump.obj"  };
 		objects["wheel"] = { "res/Rueda.obj" };
 
 		cabins.resize(20, { "res/Cabina.obj" });
@@ -686,12 +704,11 @@ namespace Objects
 		{
 			cabin.Render();
 		}
+
 		for (auto& object : objects)
 		{
 			object.second.Render();
 		}
-
-		
 	}
 
 	void Render(std::vector<std::string> keys)
@@ -958,6 +975,28 @@ void GUI()
 
 				ImGui::TreePop();
 			}
+		}
+
+		for (int i = 0; i < Objects::cabins.size(); ++i)
+		{
+			ImGui::PushID(i);
+
+			if (ImGui::TreeNode("Cabin"))
+			{
+				auto& cabin = Objects::cabins[i];
+
+				ImGui::Checkbox("Active", &cabin.active);
+
+				glm::vec3 transform = cabin.GetPosition();
+				ImGui::DragFloat3("Transform", &transform.x, 0.1);
+
+				ImGui::ColorEdit3("Color", &cabin.objectColor.x);
+
+
+				ImGui::TreePop();
+			}
+
+			ImGui::PopID();
 		}
 	}
 	ImGui::End();
