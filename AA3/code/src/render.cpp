@@ -920,7 +920,9 @@ namespace Objects
 	void MoveBulb(float dt)
 	{
 		float alpha = glm::two_pi<float>() * frequency * accum;
-		glm::vec3 position = { Config::radius * cos(alpha), Config::radius * sin(alpha), 0 };
+		float oscilation = sin(accum);
+		glm::clamp(oscilation, -0.785f, 0.785f);
+		glm::vec3 position = { Config::radius * cos(alpha), Config::radius * sin(alpha)-4.f, oscilation };
 
 		Light::SetPosition(1, position);
 	}
